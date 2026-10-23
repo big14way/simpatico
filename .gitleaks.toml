@@ -1,0 +1,14 @@
+title = "simpatico gitleaks config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "qloo-hackathon-key"
+description = "Qloo hackathon API key"
+regex = '''hack_[0-9a-f]{40}'''
+keywords = ["hack_"]
+
+[allowlist]
+description = "pattern definitions, not secrets"
+paths = ['''scripts/guard\.sh''', '''\.gitleaks\.toml''']

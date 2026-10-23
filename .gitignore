@@ -1,0 +1,28 @@
+# private research notes, never commit
+SIMPATICO_BLUEPRINT.md
+
+# secrets
+.env
+.env.*
+!.env.example
+
+# Qloo response data must never land in the public repo (Qloo hackathon terms)
+.data/
+recordings/
+*.qloo.json
+
+# deps / build
+node_modules/
+.next/
+out/
+dist/
+coverage/
+*.tsbuildinfo
+.turbo/
+.vercel
+
+# os / editor
+.DS_Store
+*.log
+.idea/
+.vscode/

@@ -1,0 +1,23 @@
+{
+  "name": "simpatico",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @simpatico/web dev",
+    "build": "pnpm --filter @simpatico/web build",
+    "start": "pnpm --filter @simpatico/web start",
+    "test": "vitest run",
+    "typecheck": "pnpm -r --no-bail typecheck",
+    "guard": "bash scripts/guard.sh"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "5.0.5"
+  }
+}
