@@ -66,7 +66,8 @@ describe('red flags', () => {
 });
 
 describe('verdict', () => {
-  const b = DEFAULT_BANDS;
+  // explicit bands so these rules don't move when the defaults are recalibrated
+  const b = { ...DEFAULT_BANDS, advanceMin: 70, watchMin: 55 };
   const flag = (f: 'FADING' | 'TASTE_CLASH') => ({ flag: f, rule: '', observed: {} });
   it('ADVANCE / WATCH / PASS bands without flags', () => {
     expect(decideVerdict({ F: 72, coverage: 1, flags: [], mitigated: [] }, b).verdict).toBe('ADVANCE');

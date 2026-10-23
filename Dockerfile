@@ -1,7 +1,7 @@
 # Simpatico: one container serving the UI and the API (Next.js standalone).
 FROM node:22-bookworm-slim AS base
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH CI=1
-RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
+RUN npm install -g pnpm@10.33.0
 
 FROM base AS deps
 WORKDIR /repo

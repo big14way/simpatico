@@ -4,6 +4,7 @@ import { body, clientIp, fail, json } from '@/lib/http';
 import { allowPerHour } from '@/lib/ratelimit';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 300;
 
 export async function GET(req: Request) {
   const runId = new URL(req.url).searchParams.get('runId');

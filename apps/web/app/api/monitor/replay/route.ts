@@ -4,6 +4,7 @@ import { body, clientIp, fail, json } from '@/lib/http';
 import { allowPerHour } from '@/lib/ratelimit';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 300;
 
 /** Historical replay: what the monitor would have flagged week by week (dry run). */
 export async function POST(req: Request) {

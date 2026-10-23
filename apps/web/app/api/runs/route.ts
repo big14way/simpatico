@@ -1,9 +1,12 @@
+import { after } from 'next/server';
 import { scenario, startRun, type MandateInput } from '@simpatico/engine';
 import { getDeps } from '@/lib/runtime';
 import { body, clientIp, fail, json } from '@/lib/http';
 import { allowPerHour, runningRuns } from '@/lib/ratelimit';
 
 export const dynamic = 'force-dynamic';
+// the screen keeps running after the response (after()); serverless hosts cap it here
+export const maxDuration = 300;
 
 const PER_HOUR = Number(process.env.LIVE_RUNS_PER_HOUR ?? 6);
 const MAX_CONCURRENT = 2;
@@ -33,7 +36,7 @@ export async function POST(req: Request) {
     } else {
       return json({ error: 'Send a mandate or a scenario.' }, 400);
     }
-    const runId = await startRun(deps, mandate, { scenario: slug, refresh: !!b.refresh });
+    const runId = await startRun(deps, mandate, { scenario: slug, refresh: !!b.refresh, schedule: (job) => after(job) });
     return json({ runId }, 201);
   } catch (err) {
     return fail(err);

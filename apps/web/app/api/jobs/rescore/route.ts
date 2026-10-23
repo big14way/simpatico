@@ -4,6 +4,7 @@ import { getDeps } from '@/lib/runtime';
 import { fail, json } from '@/lib/http';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 300;
 
 /**
  * Weekly re-score, called by the GitHub Actions cron. Signed:

@@ -19,6 +19,8 @@ export interface StartOptions {
   refresh?: boolean;
   /** wait for the run to finish (scripts/tests) instead of returning immediately */
   wait?: boolean;
+  /** hand the background job to the host (e.g. Next's after() on serverless) */
+  schedule?: (job: Promise<void>) => void;
 }
 
 export async function startRun(deps: EngineDeps, input: MandateInput, opts: StartOptions = {}): Promise<string> {
@@ -30,6 +32,7 @@ export async function startRun(deps: EngineDeps, input: MandateInput, opts: Star
   await deps.store.runs.update(id, { state });
   const job = continueRun(deps, id);
   if (opts.wait) await job;
+  else if (opts.schedule) opts.schedule(job);
   else void job;
   return id;
 }
@@ -123,7 +126,12 @@ export interface ResolutionChoice {
 }
 
 /** Apply the user's confirm-chip picks and resume the run. */
-export async function submitResolutions(deps: EngineDeps, runId: string, choices: ResolutionChoice[], opts: { wait?: boolean } = {}): Promise<void> {
+export async function submitResolutions(
+  deps: EngineDeps,
+  runId: string,
+  choices: ResolutionChoice[],
+  opts: { wait?: boolean; schedule?: (job: Promise<void>) => void } = {},
+): Promise<void> {
   const run = await deps.store.runs.get<Mandate, RunState>(runId);
   if (!run) throw new Error('run not found');
   if (run.status !== 'needs_input') throw new Error('this run is not waiting for input');
@@ -157,6 +165,7 @@ export async function submitResolutions(deps: EngineDeps, runId: string, choices
   await deps.store.runs.appendEvent(runId, 'info', `Confirmed ${choices.filter((c) => c.entityId).length} name(s), dropped ${choices.filter((c) => !c.entityId).length}.`);
   const job = continueRun(deps, runId);
   if (opts.wait) await job;
+  else if (opts.schedule) opts.schedule(job);
   else void job;
 }
 

@@ -1,0 +1,33 @@
+name: weekly-rescore
+
+# Re-scores every watched deal (ADVANCE / WATCH) against fresh Qloo data and fires alerts.
+# Signed request: HMAC-SHA256 over "<unix timestamp>.<body>" with JOB_HMAC_SECRET.
+on:
+  schedule:
+    - cron: '0 6 * * 1' # Mondays 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rescore:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call the rescore job
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          JOB_HMAC_SECRET: ${{ secrets.JOB_HMAC_SECRET }}
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$JOB_HMAC_SECRET" ]; then
+            echo "APP_URL or JOB_HMAC_SECRET is not set; nothing to do."
+            exit 0
+          fi
+          ts=$(date +%s)
+          body='{}'
+          sig=$(printf '%s.%s' "$ts" "$body" | openssl dgst -sha256 -hmac "$JOB_HMAC_SECRET" -hex | sed 's/^.*= *//')
+          curl -fsS --max-time 300 -X POST "$APP_URL/api/jobs/rescore" \
+            -H "Content-Type: application/json" \
+            -H "X-Simpatico-Timestamp: $ts" \
+            -H "X-Simpatico-Signature: sha256=$sig" \
+            --data "$body"

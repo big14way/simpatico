@@ -40,9 +40,14 @@ export interface VerdictBands {
   minCoverage: number;
 }
 
+/**
+ * Calibrated once, on 2026-10-23, from the pooled F distribution of the three showcase
+ * screens (26 scored targets): ADVANCE at the 70th percentile (66.7), WATCH at the 40th
+ * (62.1), rounded. Not tuned per scenario.
+ */
 export const DEFAULT_BANDS: VerdictBands = {
-  advanceMin: 70,
-  watchMin: 55,
+  advanceMin: 67,
+  watchMin: 62,
   minCoverage: 0.6,
 };
 

@@ -1,0 +1,14 @@
+# The Vercel CLI does not read .gitignore: keep secrets, private notes and local data out of uploads.
+.env
+.env.*
+!.env.example
+**/.env
+SIMPATICO_BLUEPRINT.md
+.data
+**/.data
+recordings
+**/node_modules
+**/.next
+**/*.tsbuildinfo
+apps/web/public/maplibre-gl-worker.js
+coverage

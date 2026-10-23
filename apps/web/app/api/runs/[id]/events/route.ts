@@ -1,6 +1,7 @@
 import { getStore } from '@/lib/runtime';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 300;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const TERMINAL = new Set(['done', 'failed', 'needs_input']);
@@ -31,7 +32,8 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
       };
       try {
         const started = Date.now();
-        while (!closed && Date.now() - started < 15 * 60_000) {
+        // end before the host's function limit; the client reconnects with the last seen id
+        while (!closed && Date.now() - started < 270_000) {
           await flush();
           const run = await store.runs.get(id);
           if (!run) {
