@@ -32,12 +32,28 @@ export function qlooForRun(deps: EngineDeps, runId: string | null, opts: { mode?
     limiter: deps.limiter,
     mode: opts.mode ?? deps.mode,
     refresh: opts.refresh ?? false,
-    onCall: runId
-      ? (e) => {
-          void deps.store.runs.countCall(runId, e.fromCache).catch(() => {});
-        }
-      : undefined,
+    onCall: runId ? callCounter(deps, runId) : undefined,
   });
+}
+
+/** Buffers per-run call counts and flushes them in one UPDATE every second or so. */
+function callCounter(deps: EngineDeps, runId: string): (e: { fromCache: boolean }) => void {
+  let live = 0;
+  let cached = 0;
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const flush = () => {
+    timer = null;
+    const l = live;
+    const c = cached;
+    live = 0;
+    cached = 0;
+    void deps.store.runs.addCalls(runId, l, c).catch(() => {});
+  };
+  return (e) => {
+    if (e.fromCache) cached++;
+    else live++;
+    timer ??= setTimeout(flush, 1000);
+  };
 }
 
 export async function scoringConfig(deps: EngineDeps): Promise<ScoringConfig> {

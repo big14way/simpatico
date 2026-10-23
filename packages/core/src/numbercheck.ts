@@ -64,13 +64,15 @@ export function checkNumbers(inp: NumberCheckInput): NumberCheckResult {
     masked = masked.slice(0, m.index!) + ' '.repeat(m[0].length) + masked.slice(m.index! + m[0].length);
   }
   const maxCount = inp.maxCount ?? 0;
+  // a purely numeric name ("47") stays visible to the checker but counts as a known value
+  const allowed = [...inp.allowed, ...(inp.knownNames ?? []).filter((n) => /^\d+$/.test(n.trim())).map((n) => Number(n.trim()))];
   for (const m of masked.matchAll(NUM_RE)) {
     const intPart = m[2]!.replace(/,/g, '');
     const value = Number(`${intPart}${m[3] ?? ''}`);
     if (!Number.isFinite(value)) continue;
     const token = { value, decimals: decimals(m[3]), percent: m[4] === '%' };
     const isSmallCount = token.decimals === 0 && !token.percent && value >= 0 && value <= maxCount;
-    const ok = isSmallCount || numberMatches(token, inp.allowed);
+    const ok = isSmallCount || numberMatches(token, allowed);
     numbers.push({ raw: m[0], value: m[1] ? -value : value, index: m.index!, ok });
   }
   numbers.sort((a, b) => a.index - b.index);

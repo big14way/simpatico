@@ -1,0 +1,16 @@
+# never ship secrets, private notes or local data into an image
+.env
+.env.*
+!.env.example
+**/.env
+SIMPATICO_BLUEPRINT.md
+.data
+**/.data
+recordings
+.git
+.github
+**/node_modules
+**/.next
+**/*.tsbuildinfo
+coverage
+apps/web/public/maplibre-gl-worker.js

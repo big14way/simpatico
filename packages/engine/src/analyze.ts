@@ -189,7 +189,7 @@ export async function stageAnalyze(ctx: RunCtx): Promise<void> {
   const ready = analysed.filter((a): a is NonNullable<typeof a> => a !== null);
   const cohortMetros: MetroScore[][] = [buyerMetros, ...ready.flatMap((a) => (a.metros && a.metros.length > 0 ? [a.metros] : []))];
   const baseline = buyerMetros.length > 0 && cohortMetros.length >= 3 ? metroBaseline(cohortMetros) : undefined;
-  for (const a of ready) {
+  await Promise.all(ready.map(async (a) => {
     const m5Sources = [buyerHeat.evidenceId, a.heat.evidenceId];
     const m5 =
       buyerHeat.status === 'error' ? uncovered('m5', buyerHeat, m5Sources)
@@ -205,5 +205,5 @@ export async function stageAnalyze(ctx: RunCtx): Promise<void> {
     done++;
     const coveredCount = Object.values(metrics).filter((m) => m.coverage > 0).length;
     await ctx.emit('progress', `Analysed ${a.target.name} (${done}/${ready.length}): ${coveredCount}/6 metrics measured.`, { targetId: a.target.targetId, done, total: ready.length });
-  }
+  }));
 }

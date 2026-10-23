@@ -200,8 +200,9 @@ describe('number checker and names with digits', () => {
 });
 
 describe('number checker never masks bare numbers', () => {
-  it('still checks a number that equals a numeric brand name', () => {
-    const r = checkNumbers({ text: 'F 47 for brand 47.', allowed: [], knownNames: ['47'] });
-    expect(r.unverified.map((n) => n.raw)).toEqual(['47', '47']);
+  it('still checks other numbers, and treats a numeric brand name as a known value', () => {
+    const r = checkNumbers({ text: 'Brand 47 scores F 52.1.', allowed: [], knownNames: ['47'] });
+    expect(r.unverified.map((n) => n.raw)).toEqual(['52.1']);
+    expect(checkNumbers({ text: 'Brand 47 scores F 52.1.', allowed: [], knownNames: [] }).unverified.map((n) => n.raw)).toEqual(['47', '52.1']);
   });
 });

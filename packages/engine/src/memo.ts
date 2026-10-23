@@ -123,9 +123,9 @@ export async function stageMemo(ctx: RunCtx): Promise<void> {
   const dates = [ctx.state.runDate, ctx.state.asOf];
   const maxCount = Math.max(12, (ctx.state.universe ?? []).length);
 
-  for (const t of chosen) {
-    const pack = (await ctx.deps.store.evidence.list(ctx.runId, t.targetId)) as EvidenceRow[];
-    const claims = await ctx.deps.store.claims.list(ctx.runId, t.targetId);
+  await Promise.all(chosen.map(async (t) => {
+    const [packRows, claims] = await Promise.all([ctx.deps.store.evidence.list(ctx.runId, t.targetId), ctx.deps.store.claims.list(ctx.runId, t.targetId)]);
+    const pack = packRows as EvidenceRow[];
     const bull = claims.filter((c) => c.accepted && c.side === 'bull');
     const bear = claims.filter((c) => c.accepted && c.side === 'bear');
     const flags = (t.flags ?? []) as FlagHit[];
@@ -202,7 +202,7 @@ export async function stageMemo(ctx: RunCtx): Promise<void> {
         : `Memo for ${t.name} is blocked: ${full.unverifiedNumbers.length} unverified number(s)${full.language.length ? `, ${full.language.length} wording issue(s)` : ''}.`,
       { targetId: t.targetId },
     );
-  }
+  }));
 
   // ranked summary (code-written)
   const lines = [

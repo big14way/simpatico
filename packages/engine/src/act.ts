@@ -60,7 +60,7 @@ export async function stageAct(ctx: RunCtx): Promise<void> {
 
   const byAffinity = [...targets].sort((p, q) => (q.forwardAffinity ?? -1) - (p.forwardAffinity ?? -1)).map((t) => t.targetId);
   let drafts = 0;
-  for (const t of targets) {
+  await Promise.all(targets.map(async (t) => {
     const verdict = t.verdict ?? 'PASS';
     const metrics = (t.metrics ?? {}) as unknown as Partial<Record<MetricKey, MetricResult>>;
     const deal = await ctx.deps.store.pipeline.upsert({
@@ -95,7 +95,7 @@ export async function stageAct(ctx: RunCtx): Promise<void> {
       await draftFor(ctx, t, deal.id);
       drafts++;
     }
-  }
+  }));
 
   if (ctx.deps.store && (await ctx.deps.store.runs.get(ctx.runId))?.scenario) {
     const pinned = await ctx.deps.store.cache.pinForRun(ctx.runId);

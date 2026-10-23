@@ -65,19 +65,21 @@ export async function stageScore(ctx: RunCtx): Promise<void> {
     })),
   );
 
-  for (const c of computed) {
-    await ctx.deps.store.evidence.replaceForTarget(ctx.runId, c.t.targetId, rows.get(c.t.targetId) as EvidenceRow[]);
-    await ctx.deps.store.targets.upsert({
-      ...c.t,
-      stage: 'scored',
-      composite: c.comp as unknown as Record<string, unknown>,
-      flags: c.flags,
-      verdict: c.verdict.verdict,
-      why: c.verdict.why,
-      score: c.comp.F,
-      coverage: c.comp.coverage,
-    });
-  }
+  await Promise.all(
+    computed.map(async (c) => {
+      await ctx.deps.store.evidence.replaceForTarget(ctx.runId, c.t.targetId, rows.get(c.t.targetId) as EvidenceRow[]);
+      await ctx.deps.store.targets.upsert({
+        ...c.t,
+        stage: 'scored',
+        composite: c.comp as unknown as Record<string, unknown>,
+        flags: c.flags,
+        verdict: c.verdict.verdict,
+        why: c.verdict.why,
+        score: c.comp.F,
+        coverage: c.comp.coverage,
+      });
+    }),
+  );
   const counts = computed.reduce<Record<string, number>>((acc, c) => ((acc[c.verdict.verdict] = (acc[c.verdict.verdict] ?? 0) + 1), acc), {});
   await ctx.emit('info', `Scored ${computed.length} target(s): ${Object.entries(counts).map(([v, n]) => `${n} ${v}`).join(', ')} (before debate).`);
 }

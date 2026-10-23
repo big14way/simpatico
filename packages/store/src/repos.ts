@@ -183,10 +183,12 @@ export class RunsRepo {
   }
 
   async countCall(id: string, fromCache: boolean): Promise<void> {
-    await this.db.query(
-      fromCache ? 'UPDATE runs SET calls_cached = calls_cached + 1 WHERE id = $1' : 'UPDATE runs SET calls_live = calls_live + 1 WHERE id = $1',
-      [id],
-    );
+    await this.addCalls(id, fromCache ? 0 : 1, fromCache ? 1 : 0);
+  }
+
+  async addCalls(id: string, live: number, cached: number): Promise<void> {
+    if (live === 0 && cached === 0) return;
+    await this.db.query('UPDATE runs SET calls_live = calls_live + $2, calls_cached = calls_cached + $3 WHERE id = $1', [id, live, cached]);
   }
 
   async get<M = unknown, S = unknown, Sum = unknown>(id: string): Promise<RunRecord<M, S, Sum> | null> {
@@ -351,13 +353,18 @@ export class EvidenceRowsRepo {
 
   async replaceForTarget(runId: string, targetId: string, rows: StoredEvidenceRow[]): Promise<void> {
     await this.db.query('DELETE FROM evidence_rows WHERE run_id = $1 AND target_id = $2', [runId, targetId]);
-    for (const r of rows) {
-      await this.db.query(
-        `INSERT INTO evidence_rows (run_id, id, target_id, kind, metric, label, data, polarity, ref, sources)
-         VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8::jsonb,$9::jsonb,$10::jsonb)`,
-        [runId, r.id, r.targetId, r.kind, r.metric, r.label, j(r.data), j(r.polarity), j(r.ref), j(r.sources)],
-      );
-    }
+    if (rows.length === 0) return;
+    // one multi-row insert: round trips matter on a remote database
+    const params: unknown[] = [];
+    const values = rows.map((r) => {
+      const b = params.length;
+      params.push(runId, r.id, r.targetId, r.kind, r.metric, r.label, j(r.data), j(r.polarity), j(r.ref), j(r.sources));
+      return `($${b + 1},$${b + 2},$${b + 3},$${b + 4},$${b + 5},$${b + 6},$${b + 7}::jsonb,$${b + 8}::jsonb,$${b + 9}::jsonb,$${b + 10}::jsonb)`;
+    });
+    await this.db.query(
+      `INSERT INTO evidence_rows (run_id, id, target_id, kind, metric, label, data, polarity, ref, sources) VALUES ${values.join(',')}`,
+      params,
+    );
   }
 
   async list(runId: string, targetId?: string): Promise<StoredEvidenceRow[]> {
@@ -400,13 +407,17 @@ export class ClaimsRepo {
 
   async replaceForTarget(runId: string, targetId: string, claims: ClaimRecord[]): Promise<void> {
     await this.db.query('DELETE FROM claims WHERE run_id = $1 AND target_id = $2', [runId, targetId]);
-    for (const c of claims) {
-      await this.db.query(
-        `INSERT INTO claims (id, run_id, target_id, side, text, direction, flag, cites, accepted, reason, model)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11)`,
-        [c.id, c.runId, c.targetId, c.side, c.text, c.direction, c.flag, j(c.cites), c.accepted, c.reason, c.model],
-      );
-    }
+    if (claims.length === 0) return;
+    const params: unknown[] = [];
+    const values = claims.map((c) => {
+      const b = params.length;
+      params.push(c.id, c.runId, c.targetId, c.side, c.text, c.direction, c.flag, j(c.cites), c.accepted, c.reason, c.model);
+      return `($${b + 1},$${b + 2},$${b + 3},$${b + 4},$${b + 5},$${b + 6},$${b + 7},$${b + 8}::jsonb,$${b + 9},$${b + 10},$${b + 11})`;
+    });
+    await this.db.query(
+      `INSERT INTO claims (id, run_id, target_id, side, text, direction, flag, cites, accepted, reason, model) VALUES ${values.join(',')}`,
+      params,
+    );
   }
 
   async list(runId: string, targetId?: string): Promise<ClaimRecord[]> {

@@ -101,13 +101,14 @@ export async function continueRun(deps: EngineDeps, runId: string): Promise<void
       }
     }
     const summary = await summarize(deps, runId, state);
-    await deps.store.runs.update(runId, { stage: 'done', status: 'done', summary, error: null });
+    // event first, then status: a stream that sees the terminal status has already got the event
     await ctx.emit('done', `Done: ${Object.entries(summary.verdicts).map(([v, n]) => `${n} ${v}`).join(', ') || 'no targets scored'}.`, summary);
+    await deps.store.runs.update(runId, { stage: 'done', status: 'done', summary, error: null });
   } catch (err) {
     const message =
       err instanceof QlooRequiredError || err instanceof QlooCallError ? err.message : `Unexpected error: ${(err as Error).message ?? String(err)}`;
-    await deps.store.runs.update(runId, { status: 'failed', error: message }).catch(() => {});
     await deps.store.runs.appendEvent(runId, 'error', message).catch(() => {});
+    await deps.store.runs.update(runId, { status: 'failed', error: message }).catch(() => {});
   } finally {
     running.delete(runId);
   }

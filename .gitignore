@@ -27,3 +27,4 @@ coverage/
 .idea/
 .vscode/
 next-env.d.ts
+apps/web/public/maplibre-gl-worker.js
