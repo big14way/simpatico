@@ -49,6 +49,7 @@ export async function stageAnalyze(ctx: RunCtx): Promise<void> {
   const runId = ctx.runId;
   const region = ctx.mandate.region;
   const asOf = ctx.state.asOf;
+  if (shortlist.length === 0) return; // nothing to analyse: don't spend Qloo calls on the buyer alone
   await ctx.emit('stage', `Analysing ${shortlist.length} target(s) on six audience metrics (asking Qloo ~${shortlist.length * 9 + 8} questions)...`);
 
   // ---- buyer-level calls (shared by every target)

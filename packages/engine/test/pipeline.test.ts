@@ -143,3 +143,17 @@ describe('call counting', () => {
     expect(run!.callsLive + run!.callsCached).toBe(ev.length);
   });
 });
+
+describe('empty shortlist', () => {
+  it('explains why nothing was analysed and spends no analysis calls', async () => {
+    const d = deps();
+    // M&A: Oat Dream is group-owned and Crunch Co is the buyer's, so nothing is left
+    const runId = await startRun(d, { dealType: 'ma_bolt_on', buyer: { name: 'Acme Cola' }, proxies: [], universe: [{ name: 'Oat Dream' }, { name: 'Crunch Co' }], shortlistSize: 3 }, { wait: true });
+    const run = await store.runs.get(runId);
+    expect(run!.status).toBe('done');
+    const events = await store.runs.events(runId);
+    expect(events.some((e) => e.kind === 'warn' && /No candidate is left to analyse: 1 belong to another group, 1 are already the buyer's/.test(e.message))).toBe(true);
+    const ev = await store.qlooEvidence.listByRun(runId);
+    expect(ev.some((e) => e.purpose.startsWith('m'))).toBe(false);
+  });
+});

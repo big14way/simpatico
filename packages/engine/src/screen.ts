@@ -153,6 +153,21 @@ export async function stageScreen(ctx: RunCtx): Promise<void> {
   ctx.state.keys = keys;
   ctx.state.screenEvidenceIds = evidenceIds;
   await ctx.save();
+  if (shortlist.length === 0) {
+    const nOwned = ranked.filter((c) => c.ownedByBuyer && ctx.mandate.excludeOwned).length;
+    const nGroup = ranked.filter((c) => skipGroup && c.ownership === 'part_of_other').length;
+    const nUnscored = ranked.filter((c) => c.affinity === null).length;
+    await ctx.emit(
+      'warn',
+      `No candidate is left to analyse: ${[
+        nGroup ? `${nGroup} belong to another group` : '',
+        nOwned ? `${nOwned} are already the buyer's` : '',
+        nUnscored ? `${nUnscored} were not scored by Qloo` : '',
+      ]
+        .filter(Boolean)
+        .join(', ')}. Add independent candidates, or turn off the ownership filters for this mandate.`,
+    );
+  }
   const owned = ranked.filter((c) => c.ownedByBuyer).map((c) => c.name);
   const grouped = ranked.filter((c) => c.ownership === 'part_of_other');
   const unscored = ranked.filter((c) => c.affinity === null).length;
