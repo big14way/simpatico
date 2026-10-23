@@ -37,23 +37,35 @@ export function qlooForRun(deps: EngineDeps, runId: string | null, opts: { mode?
 }
 
 /** Buffers per-run call counts and flushes them in one UPDATE every second or so. */
+const counters = new Map<string, { live: number; cached: number; timer: ReturnType<typeof setTimeout> | null; deps: EngineDeps }>();
+
 function callCounter(deps: EngineDeps, runId: string): (e: { fromCache: boolean }) => void {
-  let live = 0;
-  let cached = 0;
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  const flush = () => {
-    timer = null;
-    const l = live;
-    const c = cached;
-    live = 0;
-    cached = 0;
-    void deps.store.runs.addCalls(runId, l, c).catch(() => {});
-  };
   return (e) => {
-    if (e.fromCache) cached++;
-    else live++;
-    timer ??= setTimeout(flush, 1000);
+    const c = counters.get(runId) ?? { live: 0, cached: 0, timer: null, deps };
+    counters.set(runId, c);
+    if (e.fromCache) c.cached++;
+    else c.live++;
+    c.timer ??= setTimeout(() => void flushCallCounts(runId).catch(() => {}), 1000);
   };
+}
+
+/**
+ * Write any buffered counts now. The pipeline awaits this before it returns: serverless
+ * hosts may freeze the process as soon as the work settles, so a pending timer can't be trusted.
+ */
+export async function flushCallCounts(runId: string): Promise<void> {
+  const c = counters.get(runId);
+  if (!c) return;
+  if (c.timer) clearTimeout(c.timer);
+  c.timer = null;
+  const { live, cached } = c;
+  c.live = 0;
+  c.cached = 0;
+  if (live === 0 && cached === 0) {
+    counters.delete(runId);
+    return;
+  }
+  await c.deps.store.runs.addCalls(runId, live, cached);
 }
 
 export async function scoringConfig(deps: EngineDeps): Promise<ScoringConfig> {

@@ -127,3 +127,13 @@ describe('pipeline (offline, synthetic Qloo)', () => {
     }
   });
 });
+
+describe('call counting', () => {
+  it('records every Qloo call on the run by the time the pipeline returns', async () => {
+    const d = deps();
+    const runId = await startRun(d, { ...mandate, buyer: { name: 'Acme Cola' } }, { wait: true });
+    const run = await store.runs.get(runId);
+    const ev = await store.qlooEvidence.listByRun(runId);
+    expect(run!.callsLive + run!.callsCached).toBe(ev.length);
+  });
+});

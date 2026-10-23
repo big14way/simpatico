@@ -1,7 +1,7 @@
 import { QlooRequiredError, newId, type DemoMode } from '@simpatico/qloo';
 import { stageAct } from './act';
 import { stageAnalyze } from './analyze';
-import { qlooForRun, today, type EngineDeps } from './context';
+import { flushCallCounts, qlooForRun, today, type EngineDeps } from './context';
 import { stageDebate } from './debate';
 import { parseMandate, type Mandate, type MandateInput } from './mandate';
 import { stageMemo } from './memo';
@@ -113,6 +113,7 @@ export async function continueRun(deps: EngineDeps, runId: string): Promise<void
     await deps.store.runs.appendEvent(runId, 'error', message).catch(() => {});
     await deps.store.runs.update(runId, { status: 'failed', error: message }).catch(() => {});
   } finally {
+    await flushCallCounts(runId).catch(() => {});
     running.delete(runId);
   }
 }
