@@ -43,6 +43,9 @@ export function MandateForm({ examples, qlooReady }: { examples: Example[]; qloo
   const [take, setTake] = useState(15);
   const [shortlistSize, setShortlistSize] = useState(8);
   const [excludeOwned, setExcludeOwned] = useState(true);
+  // null = follow the deal type (skip group-owned brands for M&A and VC, keep them for licensing)
+  const [excludeGroup, setExcludeGroup] = useState<boolean | null>(null);
+  const groupDefault = dealType !== 'licensing';
   const [asOf, setAsOf] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +62,7 @@ export function MandateForm({ examples, qlooReady }: { examples: Example[]; qloo
     setUniverse((m.universe ?? []).map((u) => u.name).join('\n'));
     setPinned((m.universe ?? []).filter((u) => u.pin).map((u) => u.name));
     setExcludeOwned(m.excludeOwned ?? true);
+    setExcludeGroup(null);
     setShortlistSize(m.shortlistSize ?? 8);
     setDiscover(false);
     setTags([]);
@@ -97,6 +101,7 @@ export function MandateForm({ examples, qlooReady }: { examples: Example[]; qloo
       universe: universeNames.map((name) => (pinned.includes(name) ? { name, pin: true } : { name })),
       discover: { enabled: discover, categoryTags: tags, popularityMax: popMax ? Number(popMax) : undefined, take },
       excludeOwned,
+      excludeGroupOwned: excludeGroup ?? groupDefault,
       shortlistSize,
       momentumAsOf: asOf || undefined,
     };
@@ -220,10 +225,16 @@ export function MandateForm({ examples, qlooReady }: { examples: Example[]; qloo
           <input className="input" type="date" value={asOf} onChange={(e) => setAsOf(e.target.value)} />
           <span className="block text-xs text-muted">Defaults to today. Qloo&rsquo;s trending series has not moved since Oct 2025, so recent windows show momentum as not measured.</span>
         </label>
-        <label className="flex items-start gap-2 pt-6 text-sm">
-          <input type="checkbox" checked={excludeOwned} onChange={(e) => setExcludeOwned(e.target.checked)} />
-          Exclude brands Qloo lists under the buyer&rsquo;s parent company
-        </label>
+        <div className="space-y-2 pt-6 text-sm">
+          <label className="flex items-start gap-2">
+            <input type="checkbox" checked={excludeOwned} onChange={(e) => setExcludeOwned(e.target.checked)} />
+            Skip brands Qloo lists under the buyer&rsquo;s parent company
+          </label>
+          <label className="flex items-start gap-2">
+            <input type="checkbox" checked={excludeGroup ?? groupDefault} onChange={(e) => setExcludeGroup(e.target.checked)} />
+            Skip brands owned by another group (not acquirable or venture-stage; off by default for licensing)
+          </label>
+        </div>
       </fieldset>
 
       {error && <p className="rounded-lg border border-critical px-3 py-2 text-sm text-critical">{error}</p>}

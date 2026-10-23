@@ -28,6 +28,11 @@ export const MandateSchema = z.object({
     .default({ enabled: false, categoryTags: [], take: 15 }),
   /** drop targets whose Qloo ultimate parent is the buyer's parent */
   excludeOwned: z.boolean().default(true),
+  /**
+   * drop targets Qloo lists under another parent group (not acquirable, not venture-stage).
+   * Unset = by deal type: on for M&A and VC theses, off for licensing (a collab works with any owner).
+   */
+  excludeGroupOwned: z.boolean().optional(),
   shortlistSize: z.number().int().min(1).max(12).default(8),
   /** entity ids always carried into the shortlist */
   pinned: z.array(z.string()).max(12).default([]),
@@ -53,4 +58,9 @@ export function parseMandate(input: unknown): Mandate {
     throw new z.ZodError([{ code: 'custom', path: ['universe'], message: 'Universe plus discovery is capped at 60 brands.', input: m.universe }]);
   }
   return m;
+}
+
+/** Whether brands owned by another group are skipped for this mandate. */
+export function skipsGroupOwned(m: Mandate): boolean {
+  return m.excludeGroupOwned ?? m.dealType !== 'licensing';
 }

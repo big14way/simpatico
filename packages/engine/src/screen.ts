@@ -1,4 +1,5 @@
 import type { EntityProfile, InsightEntity } from '@simpatico/qloo';
+import { skipsGroupOwned } from './mandate';
 import { ownershipOf, type Ownership } from './resolve';
 import type { RunCtx } from './run-context';
 import { QlooCallError } from './run-context';
@@ -97,7 +98,9 @@ export async function stageScreen(ctx: RunCtx): Promise<void> {
   const ranked = [...candidates].sort((a, b) => (b.affinity ?? -1) - (a.affinity ?? -1));
 
   const k = ctx.mandate.shortlistSize;
-  const eligible = ranked.filter((c) => c.affinity !== null && !(ctx.mandate.excludeOwned && c.ownedByBuyer));
+  const skipGroup = skipsGroupOwned(ctx.mandate);
+  const skipped = (c: ScreenedCandidate) => (ctx.mandate.excludeOwned && c.ownedByBuyer) || (skipGroup && c.ownership === 'part_of_other');
+  const eligible = ranked.filter((c) => c.affinity !== null && !skipped(c));
   const shortlist = eligible.slice(0, k).map((c) => c.id);
   const pinnedIds = [...ctx.mandate.pinned, ...universe.filter((u) => u.pinned).map((u) => u.id)];
   for (const id of pinnedIds) {
@@ -131,7 +134,14 @@ export async function stageScreen(ctx: RunCtx): Promise<void> {
       composite: null,
       flags: null,
       verdict: null,
-      why: c.affinity === null ? 'Qloo did not score this brand for the buyer audience.' : null,
+      why:
+        c.affinity === null
+          ? 'Qloo did not score this brand for the buyer audience.'
+          : !shortlist.includes(c.id) && skipped(c)
+            ? c.ownedByBuyer
+              ? `Already owned by ${String(buyer.parent).replace(/\.$/, '')}.`
+              : `Part of ${String(c.parent).replace(/\.$/, '')}: not acquirable or venture-stage for this deal type.`
+            : null,
       score: null,
       coverage: null,
       ownedByBuyer: c.ownedByBuyer,
@@ -144,11 +154,15 @@ export async function stageScreen(ctx: RunCtx): Promise<void> {
   ctx.state.screenEvidenceIds = evidenceIds;
   await ctx.save();
   const owned = ranked.filter((c) => c.ownedByBuyer).map((c) => c.name);
+  const grouped = ranked.filter((c) => c.ownership === 'part_of_other');
   const unscored = ranked.filter((c) => c.affinity === null).length;
   await ctx.emit(
     'info',
     `Shortlisted ${shortlist.length}: ${shortlist.map((id) => candidates.find((c) => c.id === id)!.name).join(', ')}.` +
-      (owned.length ? ` Already owned by ${buyer.parent}: ${owned.join(', ')}${ctx.mandate.excludeOwned ? ' (excluded)' : ''}.` : '') +
+      (owned.length ? ` Already owned by ${buyer.parent}: ${owned.join(', ')}${ctx.mandate.excludeOwned ? ' (skipped unless pinned)' : ''}.` : '') +
+      (grouped.length && skipGroup
+        ? ` Skipped as part of another group (not acquirable or venture-stage): ${grouped.filter((c) => !shortlist.includes(c.id)).map((c) => `${c.name} (${c.parent})`).join(', ')}.`
+        : '') +
       (unscored ? ` ${unscored} brand(s) not scored by Qloo.` : ''),
   );
 }

@@ -58,7 +58,13 @@ describe('pipeline (offline, synthetic Qloo)', () => {
     expect(run!.state.shortlist).not.toContain(crunch.targetId); // excludeOwned
     const bare = targets.find((t) => t.name === 'Barely There')!;
     expect(bare.forwardAffinity).toBeNull(); // Qloo didn't score it -> never shortlisted
-    expect(run!.state.shortlist).toHaveLength(4);
+    // M&A skips brands owned by another group by default
+    const oat = targets.find((t) => t.name === 'Oat Dream')!;
+    expect(oat.profile?.ownership).toBe('part_of_other');
+    expect(run!.state.shortlist).not.toContain(oat.targetId);
+    expect(oat.why).toBe('Part of Big Food Group: not acquirable or venture-stage for this deal type.');
+    expect(crunch.why).toBe('Already owned by Acme Holdings, Inc.');
+    expect(run!.state.shortlist).toHaveLength(3);
 
     const scored = targets.filter((t) => run!.state.shortlist!.includes(t.targetId));
     for (const t of scored) {
@@ -68,13 +74,13 @@ describe('pipeline (offline, synthetic Qloo)', () => {
       expect(['ADVANCE', 'WATCH', 'PASS', 'INSUFFICIENT_COVERAGE']).toContain(t.verdict);
     }
     const rows = await store.evidence.list(runId);
-    expect(rows.filter((r) => r.id.endsWith('-m1'))).toHaveLength(4);
+    expect(rows.filter((r) => r.id.endsWith('-m1'))).toHaveLength(3);
 
     const memos = await store.memos.list(runId);
     expect(memos.find((m) => m.targetId === null)).toBeTruthy();
     for (const m of memos) if (!m.ok) throw new Error(`memo ${m.id} failed checks: ${JSON.stringify(m.checks)}\n${m.markdown}`);
     const deals = await store.pipeline.list();
-    expect(deals.filter((x) => x.lastRunId === runId)).toHaveLength(4);
+    expect(deals.filter((x) => x.lastRunId === runId)).toHaveLength(3);
     const events = await store.runs.events(runId);
     expect(events.some((e) => e.kind === 'warn' && /debate was skipped/.test(e.message))).toBe(true);
     expect(events.at(-1)!.kind).toBe('done');

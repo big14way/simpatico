@@ -197,7 +197,7 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
                       <td className="num px-2 py-1.5 text-right">{f2(t.forwardAffinity)}</td>
                       <td className="num px-2 py-1.5 text-right text-ink-2">{f2(t.popularity)}</td>
                       <td className="px-2 py-1.5 text-ink-2">{OWNERSHIP[String(t.profile?.ownership ?? 'unknown')]}</td>
-                      <td className="px-2 py-1.5 text-ink-2">{(run.state.shortlist ?? []).includes(t.targetId) ? 'yes' : t.forwardAffinity === null ? 'not scored by Qloo' : ''}</td>
+                      <td className="px-2 py-1.5 text-ink-2">{(run.state.shortlist ?? []).includes(t.targetId) ? 'yes' : t.why ?? ''}</td>
                     </tr>
                   ))}
               </tbody>
