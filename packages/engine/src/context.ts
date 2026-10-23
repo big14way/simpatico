@@ -1,23 +1,10 @@
+import type { Mailer, Notifier, PipelineMirror } from '@simpatico/actions';
 import type { AgentSuite } from '@simpatico/agents';
+
+export type { Mailer, Notifier, PipelineMirror };
 import { DEFAULT_SCORING, type ScoringConfig } from '@simpatico/core';
 import { Limiter, QlooClient, type DemoMode, type Transport } from '@simpatico/qloo';
 import type { Store } from '@simpatico/store';
-
-export interface Notifier {
-  /** Slack (or similar) alert; returns a delivery note for the alert row */
-  alert(text: string): Promise<Record<string, unknown>>;
-}
-
-export interface Mailer {
-  send(msg: { to: string; subject: string; text: string }): Promise<{ id: string | null; deliveredTo: string }>;
-  readonly sandbox: boolean;
-  readonly sandboxInbox: string | null;
-}
-
-export interface PipelineMirror {
-  /** e.g. Notion; failures are logged, never fatal */
-  upsertDeal(deal: Record<string, unknown>): Promise<void>;
-}
 
 export interface EngineDeps {
   store: Store;

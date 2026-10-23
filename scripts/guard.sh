@@ -32,5 +32,11 @@ if git grep --cached -nIE '(sk-ant-[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9]{32,}|re_[A-
   fail=1
 fi
 
+if git grep --cached -nIE 'postgres(ql)?://[^:/@[:space:]]+:[^@[:space:]]+@|npg_[A-Za-z0-9]{12,}' -- . ':!scripts/guard.sh' ':!.gitleaks.toml' >/dev/null 2>&1; then
+  echo "guard: a database URL with a password is tracked:"
+  git grep --cached -nIlE 'postgres(ql)?://[^:/@[:space:]]+:[^@[:space:]]+@|npg_[A-Za-z0-9]{12,}' -- . ':!scripts/guard.sh' ':!.gitleaks.toml'
+  fail=1
+fi
+
 if [ "$fail" -ne 0 ]; then echo "guard: FAILED"; exit 1; fi
 echo "guard: ok ($(echo "$files" | grep -c . ) files checked)"

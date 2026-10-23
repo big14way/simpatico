@@ -1,0 +1,171 @@
+@import "tailwindcss";
+
+/* Tokens: one palette, light and dark steps chosen per surface (validated categorical slots 1-3). */
+:root {
+  color-scheme: light;
+  --plane: #f9f9f7;
+  --surface-1: #fcfcfb;
+  --surface-2: #f3f2ee;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #6f6e69;
+  --hairline: #e1e0d9;
+  --axis: #c3c2b7;
+  --ring: rgba(11, 11, 11, 0.1);
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --accent: #0b0b0b;
+  --accent-ink: #ffffff;
+  --link: #1c5cab;
+  --good-ink: #006300;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --plane: #0d0d0d;
+    --surface-1: #1a1a19;
+    --surface-2: #232321;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --text-muted: #9a998f;
+    --hairline: #2c2c2a;
+    --axis: #383835;
+    --ring: rgba(255, 255, 255, 0.1);
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --accent: #f0efec;
+    --accent-ink: #0b0b0b;
+    --link: #86b6ef;
+    --good-ink: #0ca30c;
+  }
+}
+
+@theme inline {
+  --color-plane: var(--plane);
+  --color-surface: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--text-primary);
+  --color-ink-2: var(--text-secondary);
+  --color-muted: var(--text-muted);
+  --color-line: var(--hairline);
+  --color-axis: var(--axis);
+  --color-s1: var(--series-1);
+  --color-s2: var(--series-2);
+  --color-s3: var(--series-3);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-link: var(--link);
+  --color-good-ink: var(--good-ink);
+  --color-good: #0ca30c;
+  --color-warn: #fab219;
+  --color-serious: #ec835a;
+  --color-critical: #d03b3b;
+  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+html,
+body {
+  background: var(--plane);
+  color: var(--text-primary);
+}
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+a {
+  color: var(--link);
+}
+.num {
+  font-variant-numeric: tabular-nums;
+}
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 8px;
+  padding: 0.5rem 0.9rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: 1px solid var(--accent);
+  cursor: pointer;
+  text-decoration: none;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--hairline);
+}
+.btn-ghost:hover {
+  background: var(--surface-2);
+}
+.input {
+  width: 100%;
+  border: 1px solid var(--hairline);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.9rem;
+}
+.input:focus,
+.btn:focus-visible {
+  outline: 2px solid var(--series-1);
+  outline-offset: 1px;
+}
+.label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+.prose-memo h1,
+.prose-memo h2 {
+  font-weight: 700;
+  font-size: 1.15rem;
+  margin: 0.4rem 0 0.6rem;
+}
+.prose-memo p {
+  margin: 0.5rem 0;
+  line-height: 1.55;
+}
+.prose-memo ul {
+  list-style: disc;
+  padding-left: 1.2rem;
+  margin: 0.4rem 0;
+}
+.prose-memo li {
+  margin: 0.2rem 0;
+}
+.prose-memo table {
+  border-collapse: collapse;
+  margin: 0.6rem 0;
+  font-size: 0.85rem;
+}
+.prose-memo th,
+.prose-memo td {
+  border-bottom: 1px solid var(--hairline);
+  padding: 0.3rem 0.6rem;
+  text-align: left;
+}
+.prose-memo mark {
+  background: color-mix(in srgb, #d03b3b 22%, transparent);
+  color: inherit;
+  border-bottom: 2px solid #d03b3b;
+  padding: 0 2px;
+  border-radius: 2px;
+}
