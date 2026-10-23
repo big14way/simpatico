@@ -35,13 +35,28 @@ export function intendedRecipient(profile: Record<string, unknown> | null): stri
 }
 
 export function templateOutreach(dealType: keyof typeof DEAL_TYPE_LABELS, buyerName: string, targetName: string, facts: string[]): { subject: string; body: string } {
-  const purpose =
-    dealType === 'licensing' ? 'a licensing or co-branded collaboration' : dealType === 'vc_thesis' ? 'an introductory conversation about your plans' : 'a strategic partnership conversation';
+  const factLines = facts.length ? ['', 'A few things that stood out:', ...facts.slice(0, 3).map((f) => `- ${f}`)] : [];
+  if (dealType === 'vc_thesis') {
+    // a thesis screen is an investor writing to a founder, not the anchor brand writing to a partner
+    const body = [
+      `Hi ${targetName} team,`,
+      '',
+      `I'm researching consumer brands for an investment thesis built around the ${buyerName} audience. Audience research suggests yours overlaps with it strongly, and I'd love to learn more about where you're taking the brand.`,
+      ...factLines,
+      '',
+      'Would you be open to a 30-minute intro call in the next few weeks?',
+      '',
+      'Best regards,',
+      'Simpatico deal desk',
+    ].join('\n');
+    return { subject: `Intro: ${targetName} and the ${buyerName} audience`, body };
+  }
+  const purpose = dealType === 'licensing' ? 'a licensing or co-branded collaboration' : 'a strategic partnership conversation';
   const body = [
     `Hi ${targetName} team,`,
     '',
     `I work with ${buyerName} on partnerships. Our audience research shows a strong overlap in what our two audiences care about, and we'd welcome ${purpose}.`,
-    ...(facts.length ? ['', 'A few things that stood out:', ...facts.slice(0, 3).map((f) => `- ${f}`)] : []),
+    ...factLines,
     '',
     'Would you be open to a 30-minute call in the next few weeks?',
     '',
@@ -121,6 +136,12 @@ async function draftFor(ctx: RunCtx, t: TargetRecord, pipelineId: string): Promi
       }
     } catch (err) {
       await ctx.emit('warn', `Outreach drafter failed for ${t.name} (${(err as Error).message}); using the plain template.`);
+    }
+  }
+  // a newer screen supersedes any draft still waiting for the same deal
+  for (const d of await ctx.deps.store.outreach.list()) {
+    if (d.pipelineId === pipelineId && d.status === 'pending') {
+      await ctx.deps.store.outreach.update(d.id, { status: 'rejected', error: `Superseded by a newer screen (${ctx.runId}).` });
     }
   }
   await ctx.deps.store.outreach.create({

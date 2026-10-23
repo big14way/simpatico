@@ -93,7 +93,7 @@ function DraftCard({ d, onChange }: { d: Draft; onChange: (d: Draft) => void }) 
             </p>
           )}
           {d.status === 'failed' && <p className="text-sm text-critical">Send failed: {d.error}</p>}
-          {d.status === 'rejected' && <p className="text-sm text-muted">Rejected.</p>}
+          {d.status === 'rejected' && <p className="text-sm text-muted">{d.error ?? 'Rejected.'}</p>}
           {d.approval && <p className="font-mono text-[11px] text-muted">body sha256 {d.approval.bodySha256.slice(0, 16)}...</p>}
         </div>
       )}

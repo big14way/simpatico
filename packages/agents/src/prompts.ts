@@ -98,13 +98,16 @@ export function memoUser(i: MemoInput): string {
 }
 
 export function outreachSystem(i: OutreachInput): string {
-  return `You draft a short first-touch email from ${i.buyerName}'s partnerships team to the ${i.targetName} team about ${
-    i.dealType === 'licensing' ? 'a licensing or co-branded collaboration' : i.dealType === 'vc_thesis' ? 'an introductory investor conversation' : 'a strategic partnership conversation'
-  }.
+  const who =
+    i.dealType === 'vc_thesis'
+      ? `an investor (sign off as "Simpatico deal desk") to the founders of ${i.targetName}, about an introductory conversation for an investment thesis built around the ${i.buyerName} audience`
+      : `${i.buyerName}'s partnerships team (sign off as "${i.buyerName} partnerships") to the ${i.targetName} team, about ${
+          i.dealType === 'licensing' ? 'a licensing or co-branded collaboration' : 'a strategic partnership conversation'
+        }`;
+  return `You draft a short first-touch email from ${who}.
 A human reviews and approves it before anything is sent.
 - Under 140 words, warm and specific, no hype, no attachments, no promises about terms.
 - You may refer to the facts in the user message in plain words; include no numbers.
-- Sign off as "${i.buyerName} partnerships".
 ${SAFE_USE}`;
 }
 
