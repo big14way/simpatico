@@ -112,6 +112,23 @@ export async function stageAct(ctx: RunCtx): Promise<void> {
     }
   }));
 
+  // a target this screen looked at but did not shortlist stops being watched
+  const screenedOnly = (await ctx.deps.store.targets.list(ctx.runId)).filter((t) => !shortlist.includes(t.targetId));
+  let retired = 0;
+  for (const t of screenedOnly) {
+    const deal = await ctx.deps.store.pipeline.findByKey(buyer.signalIds[0]!, ctx.mandate.dealType, t.targetId);
+    if (!deal || deal.lastRunId === ctx.runId) continue;
+    await ctx.deps.store.pipeline.update(deal.id, {
+      monitored: false,
+      verdict: 'PASS',
+      score: null,
+      stage: 'Screened',
+      nextStep: `Not shortlisted in the latest screen${t.why ? `: ${t.why}` : '.'}`,
+    });
+    retired++;
+  }
+  if (retired) await ctx.emit('info', `${retired} earlier deal(s) not shortlisted this time are no longer monitored.`);
+
   if (ctx.deps.store && (await ctx.deps.store.runs.get(ctx.runId))?.scenario) {
     const pinned = await ctx.deps.store.cache.pinForRun(ctx.runId);
     await ctx.emit('info', `Pinned ${pinned} Qloo responses for replay of this showcase scenario (private server-side cache).`);

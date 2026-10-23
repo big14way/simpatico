@@ -550,6 +550,11 @@ export class PipelineRepo {
     return rows[0] ? toPipeline(rows[0]) : null;
   }
 
+  async findByKey(buyerKey: string, dealType: string, targetId: string): Promise<PipelineRecord | null> {
+    const rows = await this.db.query<Row>('SELECT * FROM pipeline WHERE buyer_key = $1 AND deal_type = $2 AND target_id = $3', [buyerKey, dealType, targetId]);
+    return rows[0] ? toPipeline(rows[0]) : null;
+  }
+
   async update(id: string, patch: { stage?: PipelineStage; owner?: string | null; nextStep?: string | null; monitored?: boolean; verdict?: string; score?: number | null; lastSnapshot?: Record<string, unknown> }): Promise<void> {
     const sets: string[] = [];
     const params: unknown[] = [id];

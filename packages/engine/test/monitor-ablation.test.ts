@@ -101,3 +101,29 @@ describe('ablation', () => {
     expect(r.universe!.llmRanking).toHaveLength(4);
   });
 });
+
+describe('pipeline hygiene', () => {
+  it('a later screen that drops a target stops monitoring its old deal', async () => {
+    const d = deps();
+    const watchedBefore = (await store.pipeline.list()).filter((x) => x.monitored);
+    expect(watchedBefore.length).toBeGreaterThan(1);
+    // same buyer and deal type, shortlist of 1: every other earlier deal falls out
+    const runId = await startRun(d, {
+      dealType: 'licensing',
+      buyer: { name: 'Acme Cola' },
+      proxies: [],
+      universe: [{ name: 'Fizz One' }, { name: 'Fizz Two' }, { name: 'Oat Dream' }, { name: 'Kombu' }],
+      shortlistSize: 1,
+    }, { wait: true });
+    const run = await store.runs.get<unknown, { shortlist: string[] }>(runId);
+    expect(run!.state.shortlist).toHaveLength(1);
+    const dropped = watchedBefore.filter((x) => !run!.state.shortlist.includes(x.targetId));
+    expect(dropped.length).toBeGreaterThan(0);
+    for (const old of dropped) {
+      const now = (await store.pipeline.get(old.id))!;
+      expect(now.monitored).toBe(false);
+      expect(now.verdict).toBe('PASS');
+      expect(now.nextStep).toMatch(/^Not shortlisted in the latest screen/);
+    }
+  });
+});
