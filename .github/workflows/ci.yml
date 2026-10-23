@@ -39,3 +39,8 @@ jobs:
         run: pnpm build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
+      - name: No server-only modules in browser bundles
+        run: |
+          if grep -rl "node:net\|undici" apps/web/.next/static/chunks; then
+            echo "A client bundle pulls in server-only code (the Qloo gateway)."; exit 1
+          fi

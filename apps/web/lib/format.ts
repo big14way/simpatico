@@ -1,4 +1,10 @@
-import { DEAL_TYPE_LABELS, type DealType } from '@simpatico/core';
+// Used by client components too: keep this file free of server packages (the Qloo gateway
+// pulls in undici / node:net, which can't be bundled for the browser).
+const DEAL_TYPE_LABELS: Record<string, string> = {
+  ma_bolt_on: 'M&A bolt-on',
+  licensing: 'Licensing / co-brand',
+  vc_thesis: 'VC thesis',
+};
 
 export const VERDICT_STYLE: Record<string, { label: string; dot: string; text: string }> = {
   ADVANCE: { label: 'Advance', dot: 'bg-good', text: 'text-good-ink' },
@@ -8,7 +14,7 @@ export const VERDICT_STYLE: Record<string, { label: string; dot: string; text: s
 };
 
 export function dealTypeLabel(t: string): string {
-  return DEAL_TYPE_LABELS[t as DealType] ?? t;
+  return DEAL_TYPE_LABELS[t] ?? t;
 }
 
 export function f2(x: unknown): string {
