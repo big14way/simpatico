@@ -139,8 +139,8 @@ export function buildEvidenceRows(targets: readonly TargetEvidenceInput[]): Map<
 }
 
 /** The view of a row the models get: same id/data, minus bulky arrays. */
-export function modelView(row: EvidenceRow): { id: string; label: string; data: Record<string, unknown> } {
+export function modelView(row: EvidenceRow): { id: string; label: string; data: Record<string, unknown>; shortlistAverages?: Record<string, number> } {
   const hidden = row.metric ? HIDDEN_FROM_MODELS[row.metric] ?? [] : [];
   const data = Object.fromEntries(Object.entries(row.data).filter(([k]) => !hidden.includes(k)));
-  return { id: row.id, label: row.label, data };
+  return Object.keys(row.ref).length > 0 ? { id: row.id, label: row.label, data, shortlistAverages: row.ref } : { id: row.id, label: row.label, data };
 }

@@ -5,6 +5,8 @@ export interface EvidenceView {
   id: string;
   label: string;
   data: Record<string, unknown>;
+  /** shortlist mean per polarised path: bull cites at/above it, bear at/below */
+  shortlistAverages?: Record<string, number>;
 }
 
 export interface DebateInput {
