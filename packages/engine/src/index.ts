@@ -11,3 +11,5 @@ export * from './act';
 export * from './pipeline';
 export { QlooCallError, type RunCtx } from './run-context';
 export * from './scenarios';
+export * from './monitor';
+export * from './ablation';

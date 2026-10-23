@@ -58,6 +58,7 @@ export async function stageAct(ctx: RunCtx): Promise<void> {
   const targets = (await ctx.deps.store.targets.list(ctx.runId)).filter((t) => shortlist.includes(t.targetId));
   await ctx.emit('stage', 'Acting: pipeline board, outreach drafts (human approval required), monitor registration...');
 
+  const byAffinity = [...targets].sort((p, q) => (q.forwardAffinity ?? -1) - (p.forwardAffinity ?? -1)).map((t) => t.targetId);
   let drafts = 0;
   for (const t of targets) {
     const verdict = t.verdict ?? 'PASS';
@@ -80,6 +81,7 @@ export async function stageAct(ctx: RunCtx): Promise<void> {
         F: t.score,
         verdict,
         screenRank: t.screenRank,
+        shortlistRank: byAffinity.indexOf(t.targetId) + 1,
         forwardAffinity: t.forwardAffinity,
         momentumZ: (metrics.m6?.data?.z as number | null | undefined) ?? null,
         asOf: ctx.state.asOf,
