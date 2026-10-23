@@ -8,6 +8,24 @@ importers:
 
   .:
     devDependencies:
+      '@simpatico/actions':
+        specifier: workspace:*
+        version: link:packages/actions
+      '@simpatico/agents':
+        specifier: workspace:*
+        version: link:packages/agents
+      '@simpatico/core':
+        specifier: workspace:*
+        version: link:packages/core
+      '@simpatico/engine':
+        specifier: workspace:*
+        version: link:packages/engine
+      '@simpatico/qloo':
+        specifier: workspace:*
+        version: link:packages/qloo
+      '@simpatico/store':
+        specifier: workspace:*
+        version: link:packages/store
       '@types/node':
         specifier: 22.20.5
         version: 22.20.5
