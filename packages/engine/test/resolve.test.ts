@@ -60,5 +60,7 @@ describe('shorter hits must keep the lead word', () => {
     expect(chooseHit('Carhartt WIP', [hit('Carhartt', 0.97), hit('Reddi-wip', 0.44), hit('Wipro Limited', 0.95)])).toMatchObject({ decision: 'resolved', hit: { name: 'Carhartt' } });
     expect(chooseHit('Fear of God Essentials', [hit('Fear Of God'), hit('God of War Ragnarok')])).toMatchObject({ decision: 'resolved', hit: { name: 'Fear Of God' } });
     expect(chooseHit('Satisfy Running', [hit('Brooks Running', 0.97), hit('On', 0.91), hit('Altra Running', 0.87)]).decision).toBe('ambiguous');
+    // a one-word brand that merely shares the lead word is a different brand
+    expect(chooseHit('Aime Leon Dore', [hit('Aime', 0.45), hit('DORÉ', 0.9)]).decision).toBe('ambiguous');
   });
 });

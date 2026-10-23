@@ -52,10 +52,11 @@ export function chooseHit(query: string, hits: readonly EntityHit[]): Resolution
   const qt = tokens(query);
   const lead = q.split(' ')[0] ?? '';
   // query inside the hit ("Siete" -> "Siete Family Foods"), or a shorter hit that keeps the
-  // query's lead word ("On Running" -> "On"); "Aime Leon Dore" must not match "DORÉ"
+  // query's lead word and at least half of its words ("On Running" -> "On"). "Aime Leon Dore"
+  // must match neither "DORÉ" (no lead word) nor "Aime" (one word of three).
   const containing = hits.filter((h) => {
     const ht = tokens(h.name);
-    return subset(qt, ht) || (subset(ht, qt) && ht.has(lead));
+    return subset(qt, ht) || (subset(ht, qt) && ht.has(lead) && ht.size * 2 >= qt.size);
   });
   // exactly one name-compatible hit ("Spindrift" -> "Spindrift Sparkling Water")
   if (containing.length === 1) return { decision: 'resolved', hit: containing[0]!, reason: 'contains' };
