@@ -221,20 +221,26 @@ export function demographicAlignment(inp: DemographicsInput): MetricResult {
 export interface GeoInput {
   buyer: MetroScore[];
   target: MetroScore[];
+  /**
+   * Cohort mean per metro (buyer + shortlist). Big metros score alike for almost any brand,
+   * so raw metro scores correlate at 0.9+ for every pair; subtracting the cohort mean leaves
+   * where each audience is *distinctively* strong.
+   */
+  baseline?: ReadonlyMap<string, number>;
   sources: string[];
   minMetros?: number;
 }
 
 /**
  * Correlation of metro-level audience affinity (Qloo heatmap affinity_rank summarised per
- * metro), mapped to [0, 1]. Correlation, not raw cosine: the scores are all positive, so a
- * raw cosine sits near 1 for any two brands. White space = metros in the target's top
- * quartile and the buyer's bottom half.
+ * metro), relative to the cohort when a baseline is given, mapped to [0, 1]. White space =
+ * metros in the target's top quartile and the buyer's bottom half (on the same scale).
  */
 export function geoFootprint(inp: GeoInput): MetricResult {
   const minMetros = inp.minMetros ?? 8;
   const bm = new Map(inp.buyer.map((m) => [m.metro, m]));
-  const common = inp.target.filter((m) => bm.has(m.metro));
+  const base = inp.baseline;
+  const common = inp.target.filter((m) => bm.has(m.metro) && (!base || base.has(m.metro)));
   if (common.length < minMetros) {
     return {
       key: 'm5',
@@ -245,8 +251,9 @@ export function geoFootprint(inp: GeoInput): MetricResult {
       sources: inp.sources,
     };
   }
-  const t = common.map((m) => m.score);
-  const b = common.map((m) => bm.get(m.metro)!.score);
+  const rel = (metro: string, score: number) => (base ? score - base.get(metro)! : score);
+  const t = common.map((m) => rel(m.metro, m.score));
+  const b = common.map((m) => rel(m.metro, bm.get(m.metro)!.score));
   const r = pearson(b, t);
   if (r === null) {
     return { key: 'm5', value: null, coverage: 0, note: 'Heatmap is flat across metros on one side.', data: {}, sources: inp.sources };
@@ -254,9 +261,17 @@ export function geoFootprint(inp: GeoInput): MetricResult {
   const tQ3 = quantile(t, 0.75);
   const bMed = median(b);
   const bQ3 = quantile(b, 0.75);
-  const perMetro = common.map((m) => ({ metro: m.metro, lat: m.lat, lon: m.lon, target: m.score, buyer: bm.get(m.metro)!.score }));
-  const whiteSpace = perMetro.filter((m) => m.target >= tQ3 && m.buyer <= bMed).sort((p, q) => q.target - p.target);
-  const strongholds = perMetro.filter((m) => m.target >= tQ3 && m.buyer >= bQ3).sort((p, q) => q.target + q.buyer - (p.target + p.buyer));
+  const perMetro = common.map((m, i) => ({
+    metro: m.metro,
+    lat: m.lat,
+    lon: m.lon,
+    target: m.score,
+    buyer: bm.get(m.metro)!.score,
+    targetRel: t[i]!,
+    buyerRel: b[i]!,
+  }));
+  const whiteSpace = perMetro.filter((m) => m.targetRel >= tQ3 && m.buyerRel <= bMed).sort((p, q) => q.targetRel - p.targetRel);
+  const strongholds = perMetro.filter((m) => m.targetRel >= tQ3 && m.buyerRel >= bQ3).sort((p, q) => q.targetRel + q.buyerRel - (p.targetRel + p.buyerRel));
   const value = (r + 1) / 2;
   return {
     key: 'm5',
@@ -266,6 +281,7 @@ export function geoFootprint(inp: GeoInput): MetricResult {
     data: {
       value,
       correlation: r,
+      relativeToCohort: !!base,
       metroCount: common.length,
       whiteSpaceCount: whiteSpace.length,
       whiteSpace: whiteSpace.slice(0, 8),
@@ -274,6 +290,22 @@ export function geoFootprint(inp: GeoInput): MetricResult {
     },
     sources: inp.sources,
   };
+}
+
+/** Mean metro score across a cohort, for metros every member has data for. */
+export function metroBaseline(cohort: readonly MetroScore[][]): Map<string, number> {
+  const sums = new Map<string, { s: number; n: number }>();
+  for (const member of cohort) {
+    for (const m of member) {
+      const cur = sums.get(m.metro) ?? { s: 0, n: 0 };
+      cur.s += m.score;
+      cur.n += 1;
+      sums.set(m.metro, cur);
+    }
+  }
+  const out = new Map<string, number>();
+  for (const [metro, v] of sums) if (v.n === cohort.length) out.set(metro, v.s / v.n);
+  return out;
 }
 
 // ---------------------------------------------------------------- m6 momentum

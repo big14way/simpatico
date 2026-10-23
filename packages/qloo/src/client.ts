@@ -67,12 +67,16 @@ export interface QlooClientOptions {
   /** delays between attempts; length = number of retries */
   backoffMs?: number[];
   onCall?: (e: CallEvent) => void;
+  /** skip cache reads for every call (responses are still written to the cache) */
+  refresh?: boolean;
 }
 
 export interface RecommendParams {
   filterType: EntityUrn;
   signalEntities: string[];
   filterTags?: string[];
+  /** how multiple filter.tags combine (Qloo's operator.filter.tags) */
+  tagsOperator?: 'union' | 'intersection';
   excludeEntities?: string[];
   popularityMin?: number;
   popularityMax?: number;
@@ -150,6 +154,7 @@ export class QlooClient {
       'filter.type': p.filterType,
       'signal.interests.entities': list(p.signalEntities),
       'filter.tags': list(p.filterTags),
+      'operator.filter.tags': p.filterTags && p.filterTags.length > 1 ? (p.tagsOperator ?? 'union') : '',
       'filter.exclude.entities': list(p.excludeEntities),
       'filter.popularity.min': p.popularityMin !== undefined ? String(p.popularityMin) : '',
       'filter.popularity.max': p.popularityMax !== undefined ? String(p.popularityMax) : '',
@@ -165,6 +170,7 @@ export class QlooClient {
       'filter.type': p.filterType,
       'signal.interests.entities': list(p.signalEntities),
       'filter.tags': list(p.filterTags),
+      'operator.filter.tags': p.filterTags && p.filterTags.length > 1 ? (p.tagsOperator ?? 'union') : '',
       'filter.exclude.entities': list(p.excludeEntities),
       'filter.popularity.min': p.popularityMin !== undefined ? String(p.popularityMin) : '',
       'filter.popularity.max': p.popularityMax !== undefined ? String(p.popularityMax) : '',
@@ -260,7 +266,7 @@ export class QlooClient {
     const started = Date.now();
 
     let cached: CachedResponse | null = null;
-    if (!meta.bypassCache || this.mode === 'replay') {
+    if ((!meta.bypassCache && !this.opts.refresh) || this.mode === 'replay') {
       cached = await this.opts.cache.lookup(key, {
         maxAgeMs: this.mode === 'replay' ? null : this.ttl[path],
         acceptPinned: this.mode !== 'live',

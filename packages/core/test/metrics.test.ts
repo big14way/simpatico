@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DemographicsRow, HeatCell, TagAffinity, TrendPoint } from '@simpatico/qloo';
-import { crossDomain, demographicAlignment, geoFootprint, momentumMetric, rankWeights, tasteOverlap, twoWayAffinity } from '../src/metrics';
+import { crossDomain, demographicAlignment, geoFootprint, metroBaseline, momentumMetric, rankWeights, tasteOverlap, twoWayAffinity } from '../src/metrics';
 import { metroScores, US_METROS, haversineKm } from '../src/geo';
 import { computeMomentum, trendingWindow, weekEnds, weeklySeries } from '../src/momentum';
 
@@ -181,5 +181,29 @@ describe('m6 momentum', () => {
   it('missing history is not covered', () => {
     const m = computeMomentum([{ entityId: 'a', points: [] }], asOf);
     expect(m.get('a')!.coverage).toBe(0);
+  });
+});
+
+describe('m5 relative to the cohort', () => {
+  it('removes the shared big-metro pattern before correlating', () => {
+    const metros = US_METROS.slice(0, 10);
+    // everyone scores higher in bigger metros (common pattern), plus a brand-specific tilt
+    const common = metros.map((_, i) => 0.9 - i * 0.05);
+    const tiltA = metros.map((_, i) => (i % 2 === 0 ? 0.04 : -0.04));
+    const tiltB = metros.map((_, i) => (i % 2 === 0 ? -0.04 : 0.04));
+    const mk = (tilt: number[]) => metros.map((m, i) => ({ metro: m.name, lat: m.lat, lon: m.lon, score: common[i]! + tilt[i]!, cells: 3 }));
+    const buyer = mk(tiltA);
+    const target = mk(tiltB);
+    const raw = geoFootprint({ buyer, target, sources: [] });
+    expect(raw.value!).toBeGreaterThan(0.9);
+    const baseline = metroBaseline([buyer, target, mk(metros.map(() => 0))]);
+    const rel = geoFootprint({ buyer, target, baseline, sources: [] });
+    expect(rel.value!).toBeLessThan(0.1);
+    expect(rel.data.relativeToCohort).toBe(true);
+  });
+  it('baseline only keeps metros every cohort member has', () => {
+    const a = [{ metro: 'X', lat: 0, lon: 0, score: 0.2, cells: 1 }, { metro: 'Y', lat: 0, lon: 0, score: 0.4, cells: 1 }];
+    const b = [{ metro: 'X', lat: 0, lon: 0, score: 0.6, cells: 1 }];
+    expect([...metroBaseline([a, b]).entries()]).toEqual([['X', 0.4]]);
   });
 });

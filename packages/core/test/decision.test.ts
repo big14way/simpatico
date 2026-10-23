@@ -189,3 +189,19 @@ describe('number checker and language guard', () => {
     expect(languageGuard('The audience over-indexes on indie rock because of shared taste.')).toEqual([]);
   });
 });
+
+describe('number checker and names with digits', () => {
+  it('ignores digits inside known names', () => {
+    const r = checkNumbers({ text: 'Both audiences love Maroon 5 and 7UP; affinity 0.62.', allowed: [0.62], knownNames: ['Maroon 5', '7UP'] });
+    expect(r.ok).toBe(true);
+    const r2 = checkNumbers({ text: 'Both audiences love Maroon 5; affinity 0.62.', allowed: [0.62] });
+    expect(r2.unverified.map((n) => n.raw)).toEqual(['5']);
+  });
+});
+
+describe('number checker never masks bare numbers', () => {
+  it('still checks a number that equals a numeric brand name', () => {
+    const r = checkNumbers({ text: 'F 47 for brand 47.', allowed: [], knownNames: ['47'] });
+    expect(r.unverified.map((n) => n.raw)).toEqual(['47', '47']);
+  });
+});

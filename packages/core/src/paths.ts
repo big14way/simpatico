@@ -44,3 +44,15 @@ export function numericLeaves(root: unknown, prefix = ''): [string, number][] {
   walk(root, prefix);
   return out;
 }
+
+/** Every string leaf (names of tags, entities, metros...), deduplicated. */
+export function stringLeaves(root: unknown): string[] {
+  const out = new Set<string>();
+  const walk = (v: unknown) => {
+    if (typeof v === 'string') out.add(v);
+    else if (Array.isArray(v)) v.forEach(walk);
+    else if (v && typeof v === 'object') Object.values(v).forEach(walk);
+  };
+  walk(root);
+  return [...out];
+}

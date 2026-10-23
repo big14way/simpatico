@@ -16,6 +16,8 @@ export interface NumberCheckInput {
   allowedDates?: readonly string[];
   /** small integers 1..maxCount are allowed as ranks and counts */
   maxCount?: number;
+  /** names from the evidence ("Maroon 5", "7UP"): digits inside them are not claims */
+  knownNames?: readonly string[];
 }
 
 export interface NumberCheckResult {
@@ -48,9 +50,16 @@ export function numberMatches(token: { value: number; decimals: number; percent:
 export function checkNumbers(inp: NumberCheckInput): NumberCheckResult {
   const dates = new Set(inp.allowedDates ?? []);
   const numbers: CheckedNumber[] = [];
-  // mask dates so their parts aren't re-read as numbers
+  // mask known names that contain digits, longest first, so "Title 16" isn't read as 16
   let masked = inp.text;
-  for (const m of inp.text.matchAll(DATE_RE)) {
+  // a name must contain a letter: masking a bare "47" would hide a claimed 47
+  const names = [...new Set(inp.knownNames ?? [])].filter((n) => /\d/.test(n) && /[a-z]/i.test(n)).sort((a, b) => b.length - a.length);
+  for (const name of names) {
+    const re = new RegExp(name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    masked = masked.replace(re, (m) => ' '.repeat(m.length));
+  }
+  // mask dates so their parts aren't re-read as numbers
+  for (const m of masked.matchAll(DATE_RE)) {
     numbers.push({ raw: m[0], value: NaN, index: m.index!, ok: dates.has(m[0]) });
     masked = masked.slice(0, m.index!) + ' '.repeat(m[0].length) + masked.slice(m.index! + m[0].length);
   }
