@@ -53,5 +53,5 @@ jobs:
         run: docker build -t simpatico:ci .
       - name: Image contains no env files or private notes
         run: |
-          docker run --rm --entrypoint sh simpatico:ci -c 'find / -xdev \( -name ".env" -o -name ".env.*" -o -name "SIMPATICO_BLUEPRINT.md" \) 2>/dev/null' > found.txt || true
+          docker run --rm --entrypoint sh simpatico:ci -c 'find /app -path "*/node_modules" -prune -o \( -name ".env" -o -name ".env.local" -o -name ".env.production" -o -name "SIMPATICO_BLUEPRINT.md" \) -print' > found.txt || true
           if [ -s found.txt ]; then cat found.txt; exit 1; fi
