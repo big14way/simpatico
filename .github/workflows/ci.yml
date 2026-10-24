@@ -44,3 +44,14 @@ jobs:
           if grep -rl "node:net\|undici" apps/web/.next/static/chunks; then
             echo "A client bundle pulls in server-only code (the Qloo gateway)."; exit 1
           fi
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build the container image
+        run: docker build -t simpatico:ci .
+      - name: Image contains no env files or private notes
+        run: |
+          docker run --rm --entrypoint sh simpatico:ci -c 'find / -xdev \( -name ".env" -o -name ".env.*" -o -name "SIMPATICO_BLUEPRINT.md" \) 2>/dev/null' > found.txt || true
+          if [ -s found.txt ]; then cat found.txt; exit 1; fi
