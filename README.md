@@ -120,6 +120,8 @@ packages/actions    approvals, sandboxed email (Resend), Slack alerts
 
 The agents use the Anthropic TypeScript SDK on `claude-opus-5-5` with structured outputs and server-side refusal fallbacks. Without `ANTHROPIC_API_KEY` the debate is skipped and memos are written from a ledger template.
 
+**Hosting.** The live demo runs on Vercel (functions pinned to `cle1`, next to the Neon Postgres database in us-east-2). Serverless functions stop at 300 seconds, so a screen runs in budgeted slices: each worker holds a database lease, stops between stages (and between targets in the debate and memo stages) when its budget is spent, and hands the rest to a fresh invocation through a signed internal call; a stalled run restarts when someone views it. The same app also runs as one long-lived container (`Dockerfile`, built in CI), where none of that is needed.
+
 ## Run it locally
 
 Requires Node 22+ and pnpm 10.
@@ -129,7 +131,7 @@ git clone https://github.com/big14way/simpatico && cd simpatico
 pnpm install
 cp .env.example .env          # add QLOO_API_KEY (and optionally ANTHROPIC_API_KEY, DATABASE_URL)
 ln -s ../../.env apps/web/.env
-pnpm test                     # 120+ unit and integration tests, no network needed
+pnpm test                     # 117 unit and integration tests, no network needed
 pnpm dev                      # http://localhost:3000
 ```
 
