@@ -105,15 +105,20 @@ export function diligenceQuestions(bear: ClaimRecord[], flags: FlagHit[], target
   return qs.slice(0, 5);
 }
 
-/** Stage 8: one IC memo per ADVANCE/WATCH target; every number is checked against the ledger. */
-export async function stageMemo(ctx: RunCtx): Promise<void> {
+/**
+ * Stage 8: one IC memo per ADVANCE/WATCH target; every number is checked against the ledger.
+ * Resumable: targets that already have a memo are skipped; stops between targets when the
+ * worker's time budget is spent ('partial').
+ */
+export async function stageMemo(ctx: RunCtx): Promise<void | 'partial'> {
   const cfg = await scoringConfig(ctx.deps);
   const shortlist = ctx.state.shortlist ?? [];
   const buyerName = ctx.state.buyer!.name;
   const all = (await ctx.deps.store.targets.list(ctx.runId)).filter((t) => shortlist.includes(t.targetId));
   const ranked = [...all].sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
-  const chosen = ranked.filter((t) => t.verdict === 'ADVANCE' || t.verdict === 'WATCH');
-  await ctx.emit('stage', `Writing ${chosen.length} IC memo(s); every number is checked against the ledger...`);
+  const written = new Set((await ctx.deps.store.memos.list(ctx.runId)).map((m) => m.targetId));
+  const chosen = ranked.filter((t) => (t.verdict === 'ADVANCE' || t.verdict === 'WATCH') && !written.has(t.targetId));
+  if (chosen.length > 0) await ctx.emit('stage', `Writing ${chosen.length} IC memo(s); every number is checked against the ledger...`);
   const weights = cfg.weights[ctx.mandate.dealType];
   const extra = [
     cfg.bands.advanceMin, cfg.bands.watchMin, cfg.bands.minCoverage,
@@ -123,7 +128,8 @@ export async function stageMemo(ctx: RunCtx): Promise<void> {
   const dates = [ctx.state.runDate, ctx.state.asOf];
   const maxCount = Math.max(12, (ctx.state.universe ?? []).length);
 
-  await Promise.all(chosen.map(async (t) => {
+  const queue = [...chosen];
+  const writeOne = async (t: TargetRecord) => {
     const [packRows, claims] = await Promise.all([ctx.deps.store.evidence.list(ctx.runId, t.targetId), ctx.deps.store.claims.list(ctx.runId, t.targetId)]);
     const pack = packRows as EvidenceRow[];
     const bull = claims.filter((c) => c.accepted && c.side === 'bull');
@@ -202,7 +208,19 @@ export async function stageMemo(ctx: RunCtx): Promise<void> {
         : `Memo for ${t.name} is blocked: ${full.unverifiedNumbers.length} unverified number(s)${full.language.length ? `, ${full.language.length} wording issue(s)` : ''}.`,
       { targetId: t.targetId },
     );
-  }));
+  };
+  const worker = async () => {
+    for (let t = queue.shift(); t; t = queue.shift()) {
+      if (ctx.shouldYield()) {
+        queue.unshift(t);
+        return;
+      }
+      await writeOne(t);
+      ctx.progress();
+    }
+  };
+  await Promise.all([worker(), worker(), worker(), worker()]);
+  if (queue.length > 0) return 'partial';
 
   // ranked summary (code-written)
   const lines = [

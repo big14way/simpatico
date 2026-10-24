@@ -141,6 +141,8 @@ export interface RunRecord<M = unknown, S = unknown, Sum = unknown> {
   demoMode: string;
   callsLive: number;
   callsCached: number;
+  /** while set and in the future, a worker owns this run */
+  leaseUntil: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -180,6 +182,24 @@ export class RunsRepo {
     if (patch.scenario !== undefined) add('scenario', patch.scenario);
     if (sets.length === 0) return;
     await this.db.query(`UPDATE runs SET ${sets.join(', ')}, updated_at = now() WHERE id = $1`, params);
+  }
+
+  /** Take the run if nobody holds it; false when another worker's lease is still live. */
+  async acquireLease(id: string, seconds: number): Promise<boolean> {
+    const rows = await this.db.query(
+      `UPDATE runs SET lease_until = now() + ($2::int * interval '1 second')
+        WHERE id = $1 AND (lease_until IS NULL OR lease_until < now()) RETURNING id`,
+      [id, seconds],
+    );
+    return rows.length > 0;
+  }
+
+  async renewLease(id: string, seconds: number): Promise<void> {
+    await this.db.query(`UPDATE runs SET lease_until = now() + ($2::int * interval '1 second') WHERE id = $1`, [id, seconds]);
+  }
+
+  async releaseLease(id: string): Promise<void> {
+    await this.db.query('UPDATE runs SET lease_until = NULL WHERE id = $1', [id]);
   }
 
   async countCall(id: string, fromCache: boolean): Promise<void> {
@@ -245,6 +265,7 @@ function toRun<M, S, Sum>(r: Row): RunRecord<M, S, Sum> {
     demoMode: String(r.demo_mode),
     callsLive: Number(r.calls_live),
     callsCached: Number(r.calls_cached),
+    leaseUntil: isoOrNull(r.lease_until),
     createdAt: iso(r.created_at),
     updatedAt: iso(r.updated_at),
   };

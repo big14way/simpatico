@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Limiter } from '@simpatico/qloo';
 import { createStore, openDb, type Db, type Store } from '@simpatico/store';
 import type { AgentSuite } from '@simpatico/agents';
-import { startRun, submitResolutions } from '../src/pipeline';
+import { drive, startRun, submitResolutions } from '../src/pipeline';
 import type { EngineDeps } from '../src/context';
 import type { RunState } from '../src/state';
 import { fakeQloo } from './fake-qloo';
@@ -155,5 +155,57 @@ describe('empty shortlist', () => {
     expect(events.some((e) => e.kind === 'warn' && /No candidate is left to analyse: 1 belong to another group, 1 are already the buyer's/.test(e.message))).toBe(true);
     const ev = await store.qlooEvidence.listByRun(runId);
     expect(ev.some((e) => e.purpose.startsWith('m'))).toBe(false);
+  });
+});
+
+describe('budgeted slices (serverless hosts)', () => {
+  it('finishes a run across many tiny slices, resuming debate and memos target by target', async () => {
+    let calls = 0;
+    const agents: AgentSuite = {
+      model: 'fake-model',
+      async argue(input) {
+        calls++;
+        const m1 = input.evidence.find((e) => e.id.endsWith('-m1'))!;
+        return [{ text: `${input.side} on ${input.targetName}`, direction: input.side === 'bull' ? '+' : '-', cites: [{ evidenceId: m1.id, path: 'value', value: m1.data.value as number }] }];
+      },
+      async writeMemo(i) {
+        return `## ${i.target.name}: ${i.target.verdict}\\n\\nAggregate audience affinities from Qloo.`;
+      },
+      async draftOutreach(i) {
+        return { subject: `Hello ${i.targetName}`, body: 'Short note.' };
+      },
+      async rankWithoutQloo(i) {
+        return { ranking: i.candidates, notes: '' };
+      },
+    };
+    const d = deps(agents);
+    const yields: string[] = [];
+    const runId = await startRun(d, { dealType: 'licensing', buyer: { name: 'Acme Cola' }, proxies: [], universe: [{ name: 'Fizz One' }, { name: 'Fizz Two' }, { name: 'Oat Dream' }, { name: 'Kombu' }], shortlistSize: 4 }, {
+      wait: true,
+      drive: { budgetMs: 1, onYield: async (id) => void yields.push(id) },
+    });
+    // keep "re-invoking" like the continue endpoint would until the run settles
+    let guard = 0;
+    while ((await store.runs.get(runId))!.status === 'running' && guard++ < 50) {
+      await drive(d, runId, { budgetMs: 1, onYield: async (id) => void yields.push(id) });
+    }
+    const run = await store.runs.get(runId);
+    expect(run!.status).toBe('done');
+    expect(yields.length).toBeGreaterThan(3);
+    // each target debated exactly once despite the slicing
+    expect(calls).toBe(8);
+    const claims = await store.claims.list(runId);
+    expect(new Set(claims.map((c) => c.targetId)).size).toBe(4);
+    expect(run!.leaseUntil).toBeNull();
+  });
+
+  it('a second worker cannot take a run another worker holds', async () => {
+    const d = deps();
+    const runId = await startRun(d, { dealType: 'licensing', buyer: { name: 'Acme Cola' }, proxies: [], universe: [{ name: 'Fizz One' }], shortlistSize: 1 }, { wait: true });
+    expect(await store.runs.acquireLease(runId, 60)).toBe(true);
+    expect(await store.runs.acquireLease(runId, 60)).toBe(false);
+    await store.runs.releaseLease(runId);
+    expect(await store.runs.acquireLease(runId, 60)).toBe(true);
+    await store.runs.releaseLease(runId);
   });
 });

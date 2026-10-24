@@ -53,6 +53,8 @@ CREATE TABLE IF NOT EXISTS runs (
   updated_at   timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS runs_scenario_idx ON runs (scenario, created_at DESC);
+-- one worker at a time per run (serverless invocations may overlap)
+ALTER TABLE runs ADD COLUMN IF NOT EXISTS lease_until timestamptz;
 
 CREATE TABLE IF NOT EXISTS run_events (
   seq          bigserial PRIMARY KEY,

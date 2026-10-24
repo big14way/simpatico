@@ -4,8 +4,12 @@ import type { ClaimRecord, TargetRecord } from '@simpatico/store';
 import { scoringConfig } from './context';
 import type { RunCtx } from './run-context';
 
-/** Stage 7: bull and bear argue each scored target from the same evidence; the code judge rules. */
-export async function stageDebate(ctx: RunCtx): Promise<void> {
+/**
+ * Stage 7: bull and bear argue each scored target from the same evidence; the code judge
+ * rules. Resumable: targets already debated are skipped, and it stops between targets when
+ * the worker's time budget is spent ('partial').
+ */
+export async function stageDebate(ctx: RunCtx): Promise<void | 'partial'> {
   const agents = ctx.deps.agents;
   if (!agents) {
     await ctx.emit('warn', 'No LLM is configured, so the bull/bear debate was skipped. Verdicts come from the code rules alone (no mitigations).');
@@ -15,16 +19,25 @@ export async function stageDebate(ctx: RunCtx): Promise<void> {
   const shortlist = ctx.state.shortlist ?? [];
   const buyerName = ctx.state.buyer!.name;
   const targets = (await Promise.all(shortlist.map((id) => ctx.deps.store.targets.get(ctx.runId, id)))).filter(
-    (t): t is TargetRecord => !!t && t.score !== null,
+    (t): t is TargetRecord => !!t && t.score !== null && t.stage !== 'debated',
   );
+  if (targets.length === 0) return;
   await ctx.emit('stage', `Debating ${targets.length} target(s): bull vs bear, judged in code against the ledger...`);
 
   // a few targets at a time keeps model rate limits happy
   const queue = [...targets];
   const worker = async () => {
-    for (let t = queue.shift(); t; t = queue.shift()) await debateOne(ctx, t, buyerName, cfg);
+    for (let t = queue.shift(); t; t = queue.shift()) {
+      if (ctx.shouldYield()) {
+        queue.unshift(t);
+        return;
+      }
+      await debateOne(ctx, t, buyerName, cfg);
+      ctx.progress();
+    }
   };
-  await Promise.all([worker(), worker(), worker()]);
+  await Promise.all([worker(), worker(), worker(), worker()]);
+  return queue.length > 0 ? 'partial' : undefined;
 }
 
 async function debateOne(ctx: RunCtx, t: TargetRecord, buyerName: string, cfg: Awaited<ReturnType<typeof scoringConfig>>): Promise<void> {

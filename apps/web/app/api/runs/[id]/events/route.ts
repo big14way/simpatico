@@ -1,3 +1,4 @@
+import { appOrigin, nudgeIfStalled } from '@/lib/continuation';
 import { getStore } from '@/lib/runtime';
 
 export const dynamic = 'force-dynamic';
@@ -40,6 +41,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
             send('event: gone\ndata: {}\n\n');
             break;
           }
+          if (ticks % 15 === 0) await nudgeIfStalled(appOrigin(req), run);
           if (TERMINAL.has(run.status)) {
             await flush();
             send(`event: status\ndata: ${JSON.stringify({ status: run.status, error: run.error })}\n\n`);
