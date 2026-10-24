@@ -87,9 +87,12 @@ function DraftCard({ d, onChange }: { d: Draft; onChange: (d: Draft) => void }) 
           <pre className="whitespace-pre-wrap rounded border border-line bg-surface-2 p-2 font-sans text-sm">{d.body}</pre>
           {d.status === 'sent' && (
             <p className="text-sm text-good-ink">
-              {d.deliveredTo
-                ? `Approved ${d.approval?.approvedAt.slice(0, 16).replace('T', ' ')} UTC and delivered to ${d.deliveredTo}${d.deliveredTo !== d.intendedRecipient ? ' (sandbox: intended recipient not contacted)' : ''}.`
-                : `Approved ${d.approval?.approvedAt.slice(0, 16).replace('T', ' ')} UTC. ${d.error ?? ''}`}
+              {`Approved ${d.approval?.approvedAt.slice(0, 16).replace('T', ' ')} UTC and delivered to ${d.deliveredTo ?? 'the sandbox inbox'}${d.deliveredTo !== d.intendedRecipient ? ' (sandbox: intended recipient not contacted)' : ''}.`}
+            </p>
+          )}
+          {d.status === 'approved' && (
+            <p className="text-sm text-ink">
+              Approved {d.approval?.approvedAt.slice(0, 16).replace('T', ' ')} UTC. {d.error ?? 'Not sent.'}
             </p>
           )}
           {d.status === 'failed' && <p className="text-sm text-critical">Send failed: {d.error}</p>}

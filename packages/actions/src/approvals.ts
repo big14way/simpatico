@@ -69,7 +69,8 @@ export async function approveAndSend(store: Store, mailer: Mailer, inp: ApproveI
   try {
     const sent = await mailer.send({ to: recipient, subject, text: body });
     await store.outreach.update(draft.id, {
-      status: 'sent',
+      // without an email provider the approval stands, but nothing was sent: don't call it sent
+      status: sent.simulated ? 'approved' : 'sent',
       deliveredTo: sent.simulated ? null : sent.deliveredTo,
       providerId: sent.id,
       error: sent.simulated ? 'No email provider configured: approval recorded, nothing was sent.' : null,

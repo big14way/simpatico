@@ -83,7 +83,8 @@ describe('approval-gated outreach', () => {
     const mailer = new NoMailer(true, null);
     await expect(approveAndSend(store, mailer, { draftId: 'd2', recipient: 'nope', subject: 's', body: 'b', approvedBy: 'x' })).rejects.toThrow(/valid recipient/);
     const ok = await approveAndSend(store, mailer, { draftId: 'd2', recipient: 'a@brand.example', subject: 's', body: 'b', approvedBy: 'x' });
-    expect(ok.status).toBe('sent');
+    expect(ok.status).toBe('approved');
+    expect(ok.deliveredTo).toBeNull();
     expect(ok.error).toMatch(/nothing was sent/);
     await expect(approveAndSend(store, mailer, { draftId: 'd2', recipient: 'a@brand.example', subject: 's', body: 'b', approvedBy: 'x' })).rejects.toThrow(/not pending/);
   });
