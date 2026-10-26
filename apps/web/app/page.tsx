@@ -38,7 +38,12 @@ export default async function Desk() {
         <ul className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted" aria-label="System status">
           <li>Qloo: {qlooConfigured() ? 'connected' : 'not configured (replay only)'}</li>
           <li>Mode: {demoMode()}</li>
-          <li>Agents: {deps.agents ? deps.agents.model : 'none (debate off, template memos)'}</li>
+          <li>
+            Agents:{' '}
+            {deps.agents
+              ? `${deps.agents.model}${deps.agents.rankerModel && deps.agents.rankerModel !== deps.agents.model ? ` (ablation ranker ${deps.agents.rankerModel})` : ''}`
+              : 'none (debate off, template memos)'}
+          </li>
           <li>Recorded Qloo responses: {cache.pinned}</li>
         </ul>
       </section>

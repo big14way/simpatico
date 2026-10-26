@@ -79,9 +79,11 @@ export interface CallMeta {
 export interface AgentSuite {
   /** provider/model label shown in the UI */
   readonly model: string;
+  /** model behind rankWithoutQloo, when it differs from `model` */
+  readonly rankerModel?: string;
   argue(input: DebateInput, meta?: CallMeta): Promise<Claim[]>;
   writeMemo(input: MemoInput, meta?: CallMeta): Promise<string>;
   draftOutreach(input: OutreachInput, meta?: CallMeta): Promise<{ subject: string; body: string }>;
-  /** ablation: the same model ranking the same universe with no Qloo data */
+  /** ablation: a model ranking the same universe with no Qloo data */
   rankWithoutQloo(input: AblationRankInput, meta?: CallMeta): Promise<{ ranking: string[]; notes: string }>;
 }

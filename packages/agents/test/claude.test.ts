@@ -36,7 +36,7 @@ const debate: DebateInput = {
 };
 
 describe('ClaudeAgents', () => {
-  it('asks for structured claims on claude-opus-5-5 with adaptive thinking, effort and fallbacks', async () => {
+  it('asks for structured claims on claude-haiku-5-5 with adaptive thinking, effort and fallbacks', async () => {
     const { client, calls } = fakeClient(() => ({
       stop_reason: 'end_turn',
       parsed_output: { claims: [{ text: 'Fading.', flag: 'FADING', cites: [{ evidenceId: 't1-m1', path: 'value', value: 0.6 }] }, { text: 'Thin overlap.', flag: 'NONE', cites: [] }] },
@@ -48,7 +48,7 @@ describe('ClaudeAgents', () => {
       { text: 'Thin overlap.', direction: '-', flag: null, cites: [] },
     ]);
     const p = calls[0]!.params;
-    expect(p.model).toBe('claude-opus-5-5');
+    expect(p.model).toBe('claude-haiku-5-5');
     expect(p.thinking).toEqual({ type: 'adaptive' });
     expect(p.betas).toEqual(['server-side-fallback-2026-07-01']);
     expect(p.fallbacks).toBe('default');
@@ -85,11 +85,12 @@ describe('ClaudeAgents', () => {
     })).toBe('## Memo');
   });
 
-  it('keeps the no-Qloo ranking a permutation of the candidates', async () => {
-    const { client } = fakeClient(() => ({ stop_reason: 'end_turn', parsed_output: { ranking: ['b', 'Zed', 'A', 'B'], notes: 'n' } }));
+  it('keeps the no-Qloo ranking a permutation of the candidates, on the ranker model', async () => {
+    const { client, calls } = fakeClient(() => ({ stop_reason: 'end_turn', parsed_output: { ranking: ['b', 'Zed', 'A', 'B'], notes: 'n' } }));
     const r = await new ClaudeAgents({ client }).rankWithoutQloo({ dealType: 'vc_thesis', buyerName: 'X', proxies: [], candidates: ['A', 'B', 'C'] });
     expect(r.ranking).toEqual(['B', 'A', 'C']);
     expect(r.notes).toMatch(/omitted 1/);
+    expect(calls[0]!.params.model).toBe('claude-opus-5-5');
   });
 });
 
@@ -184,6 +185,8 @@ describe('buildAgents', () => {
     expect(buildAgents({})).toBeNull();
     const a = buildAgents({ ANTHROPIC_API_KEY: 'test-key', LLM_MODEL: 'claude-sonnet-5-5', LLM_EFFORT: 'medium' });
     expect(a!.model).toBe('claude-sonnet-5-5');
+    expect(a!.rankerModel).toBe('claude-opus-5-5');
+    expect(buildAgents({ ANTHROPIC_API_KEY: 'test-key', LLM_RANKER_MODEL: 'claude-sonnet-5-5' })!.rankerModel).toBe('claude-sonnet-5-5');
   });
 
   it('uses the cache it is given unless LLM_CACHE=off', () => {

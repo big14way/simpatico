@@ -6,8 +6,12 @@ import { RED_FLAGS, type Claim } from '@simpatico/core';
 import { bearSystem, bullSystem, debateUser, memoSystem, memoUser, noQlooSystem, noQlooUser, outreachSystem, outreachUser } from './prompts';
 import type { AblationRankInput, AgentSuite, CallMeta, DebateInput, LlmCache, LlmCacheEntry, MemoInput, OutreachInput } from './types';
 
-export const DEFAULT_MODEL = 'claude-opus-5-5';
+/** debate, memos and outreach: the code judge and the memo number check catch what a small model gets wrong */
+export const DEFAULT_MODEL = 'claude-haiku-5-5';
+/** the no-Qloo ablation ranker: the comparison is against the strongest model, not the cheapest */
+export const DEFAULT_RANKER_MODEL = 'claude-opus-5-5';
 type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+type Call = { model: string; effort: Effort };
 /** bump to invalidate every stored answer (for example after a change in how answers are post-processed) */
 const CACHE_VERSION = 1;
 
@@ -42,6 +46,8 @@ const RankingSchema = z.object({
 export interface ClaudeAgentsOptions {
   client?: Anthropic;
   model?: string;
+  /** model for the no-Qloo ablation ranking (default DEFAULT_RANKER_MODEL) */
+  rankerModel?: string;
   /** effort for debate and memos (default high: citation accuracy matters) */
   effort?: Effort;
   /** server-side refusal fallbacks (on by default) */
@@ -53,23 +59,23 @@ export interface ClaudeAgentsOptions {
 /** Bull, bear, memo writer, outreach drafter and the no-Qloo ranker, on Claude. */
 export class ClaudeAgents implements AgentSuite {
   readonly model: string;
+  readonly rankerModel: string;
   private readonly client: Anthropic;
-  private readonly modelId: string;
   private readonly effort: Effort;
   private fallbacks: boolean;
   private readonly cache: LlmCache | null;
 
   constructor(opts: ClaudeAgentsOptions = {}) {
     this.client = opts.client ?? new Anthropic({ timeout: 180_000, maxRetries: 2 });
-    this.modelId = opts.model ?? DEFAULT_MODEL;
+    this.model = opts.model ?? DEFAULT_MODEL;
+    this.rankerModel = opts.rankerModel ?? DEFAULT_RANKER_MODEL;
     this.effort = opts.effort ?? 'high';
     this.fallbacks = opts.fallbacks ?? true;
     this.cache = opts.cache ?? null;
-    this.model = this.modelId;
   }
 
-  private cacheKey(kind: string, format: unknown, system: string, user: string, effort: Effort): string {
-    const parts = { v: CACHE_VERSION, kind, model: this.modelId, effort, format, system, user };
+  private cacheKey(kind: string, format: unknown, system: string, user: string, call: Call): string {
+    const parts = { v: CACHE_VERSION, kind, model: call.model, effort: call.effort, format, system, user };
     return createHash('sha256').update(JSON.stringify(parts)).digest('hex');
   }
 
@@ -91,13 +97,13 @@ export class ClaudeAgents implements AgentSuite {
     }
   }
 
-  private base(effort: Effort) {
+  private base(call: Call) {
     return {
-      model: this.modelId,
+      model: call.model,
       max_tokens: 16000,
       thinking: { type: 'adaptive' as const },
       ...(this.fallbacks ? { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' as const } : {}),
-      effort,
+      effort: call.effort,
     };
   }
 
@@ -120,11 +126,11 @@ export class ClaudeAgents implements AgentSuite {
     schema: S,
     system: string,
     user: string,
-    effort: Effort,
+    call: Call,
     meta?: CallMeta,
     problem?: (out: z.infer<S>) => string | null,
   ): Promise<z.infer<S>> {
-    const key = this.cache ? this.cacheKey(kind, z.toJSONSchema(schema), system, user, effort) : null;
+    const key = this.cache ? this.cacheKey(kind, z.toJSONSchema(schema), system, user, call) : null;
     if (key) {
       const hit = await this.recall(key);
       const parsed = hit ? schema.safeParse(hit.output) : null;
@@ -134,7 +140,7 @@ export class ClaudeAgents implements AgentSuite {
       }
     }
     const out = await this.withFallbackGuard(async () => {
-      const { effort: e, ...rest } = this.base(effort);
+      const { effort: e, ...rest } = this.base(call);
       const res = await this.client.beta.messages.parse({
         ...rest,
         output_config: { effort: e, format: betaZodOutputFormat(schema) },
@@ -148,12 +154,12 @@ export class ClaudeAgents implements AgentSuite {
     });
     const unusable = problem?.(out.output);
     if (unusable) throw new UnusableAnswerError(unusable);
-    if (key) await this.remember(key, { kind, model: out.model ?? this.modelId, output: out.output, usage: tokens(out.usage) });
+    if (key) await this.remember(key, { kind, model: out.model ?? call.model, output: out.output, usage: tokens(out.usage) });
     return out.output;
   }
 
-  private async text(kind: string, system: string, user: string, effort: Effort, meta?: CallMeta): Promise<string> {
-    const key = this.cache ? this.cacheKey(kind, 'text', system, user, effort) : null;
+  private async text(kind: string, system: string, user: string, call: Call, meta?: CallMeta): Promise<string> {
+    const key = this.cache ? this.cacheKey(kind, 'text', system, user, call) : null;
     if (key) {
       const hit = await this.recall(key);
       if (typeof hit?.output === 'string' && hit.output.trim()) {
@@ -162,7 +168,7 @@ export class ClaudeAgents implements AgentSuite {
       }
     }
     const res = await this.withFallbackGuard(async () => {
-      const { effort: e, ...rest } = this.base(effort);
+      const { effort: e, ...rest } = this.base(call);
       const res = await this.client.beta.messages.create({
         ...rest,
         output_config: { effort: e },
@@ -175,13 +181,13 @@ export class ClaudeAgents implements AgentSuite {
       if (!out) throw new Error('model returned no text');
       return { output: out, model: res.model, usage: res.usage };
     });
-    if (key) await this.remember(key, { kind, model: res.model ?? this.modelId, output: res.output, usage: tokens(res.usage) });
+    if (key) await this.remember(key, { kind, model: res.model ?? call.model, output: res.output, usage: tokens(res.usage) });
     return res.output;
   }
 
   async argue(input: DebateInput, meta?: CallMeta): Promise<Claim[]> {
     const system = input.side === 'bull' ? bullSystem(input) : bearSystem(input);
-    const out = await this.structured(`argue:${input.side}`, ClaimsSchema, system, debateUser(input), this.effort, meta);
+    const out = await this.structured(`argue:${input.side}`, ClaimsSchema, system, debateUser(input), { model: this.model, effort: this.effort }, meta);
     return out.claims.map((c) => ({
       text: c.text,
       direction: input.side === 'bull' ? '+' : '-',
@@ -191,11 +197,11 @@ export class ClaudeAgents implements AgentSuite {
   }
 
   async writeMemo(input: MemoInput, meta?: CallMeta): Promise<string> {
-    return this.text('memo', memoSystem(input), memoUser(input), this.effort, meta);
+    return this.text('memo', memoSystem(input), memoUser(input), { model: this.model, effort: this.effort }, meta);
   }
 
   async draftOutreach(input: OutreachInput, meta?: CallMeta): Promise<{ subject: string; body: string }> {
-    return this.structured('outreach', OutreachSchema, outreachSystem(input), outreachUser(input), 'low', meta);
+    return this.structured('outreach', OutreachSchema, outreachSystem(input), outreachUser(input), { model: this.model, effort: 'low' }, meta);
   }
 
   async rankWithoutQloo(input: AblationRankInput, meta?: CallMeta): Promise<{ ranking: string[]; notes: string }> {
@@ -206,7 +212,7 @@ export class ClaudeAgents implements AgentSuite {
       const n = new Set(o.ranking.map((x) => wanted.get(x.trim().toLowerCase())).filter(Boolean)).size;
       return n < need ? `model ranked only ${n} of ${input.candidates.length} candidates` : null;
     };
-    const ask = () => this.structured('rank-no-qloo', RankingSchema, noQlooSystem(input), noQlooUser(input), this.effort, meta, incomplete);
+    const ask = () => this.structured('rank-no-qloo', RankingSchema, noQlooSystem(input), noQlooUser(input), { model: this.rankerModel, effort: this.effort }, meta, incomplete);
     let out: z.infer<typeof RankingSchema>;
     try {
       out = await ask();

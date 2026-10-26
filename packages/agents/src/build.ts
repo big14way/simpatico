@@ -1,4 +1,4 @@
-import { ClaudeAgents, DEFAULT_MODEL } from './claude';
+import { ClaudeAgents, DEFAULT_MODEL, DEFAULT_RANKER_MODEL } from './claude';
 import type { AgentSuite, LlmCache } from './types';
 
 const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'] as const;
@@ -13,6 +13,7 @@ export function buildAgents(env: Record<string, string | undefined>, opts: { cac
   const effort = EFFORTS.find((e) => e === env.LLM_EFFORT) ?? 'high';
   return new ClaudeAgents({
     model: env.LLM_MODEL || DEFAULT_MODEL,
+    rankerModel: env.LLM_RANKER_MODEL || DEFAULT_RANKER_MODEL,
     effort,
     fallbacks: env.LLM_FALLBACKS !== 'off',
     cache: env.LLM_CACHE === 'off' ? undefined : opts.cache,

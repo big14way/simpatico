@@ -172,7 +172,7 @@ export async function runAblation(deps: EngineDeps, runId: string): Promise<Abla
   const result: AblationResult = {
     runId,
     createdAt: new Date().toISOString(),
-    model: deps.agents?.model ?? null,
+    model: deps.agents ? (deps.agents.rankerModel ?? deps.agents.model) : null,
     shortlist: targets.map((t) => ({ id: t.targetId, name: t.name, popularity: t.popularity })),
     variants: [
       variant('full', 'Full (Qloo, six metrics)', full, fullRank, null),
