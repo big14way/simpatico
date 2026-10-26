@@ -93,6 +93,19 @@ The `/ablation` page runs any finished screen four ways and reports Kendall τ a
 
 The LLM-only variant also cannot produce white space, demographics or momentum, and cannot check its own claims.
 
+Results on the three showcase screens (Claude Opus 5.5 at low effort, 26 Oct 2026):
+
+| | Better-for-you bolt-on | Dodgers licensing | Run-club thesis |
+|---|---|---|---|
+| Universe | 29 brands | 25 brands | 23 brands |
+| Kendall τ, LLM-only vs Qloo forward affinity (whole universe) | −0.02 | 0.46 | 0.56 |
+| Top-5 overlap, same comparison | 0 of 5 | 4 of 5 | 3 of 5 |
+| Kendall τ, LLM-only vs full model (shortlist) | −0.06 | 0.64 | 0.05 |
+| Verdicts that change without cross-domain (m3) | 2 | 5, incl. the only ADVANCE | 5, incl. 3 ADVANCE |
+| Verdicts that change without two-way affinity | 0 | 0 | 0 |
+
+Where the fit is famous (MLB's existing licensees), general knowledge lands close to Qloo's audience data; where it isn't (better-for-you brands against the PepsiCo audience), the LLM-only ranking is unrelated to it. Cross-domain agreement is the metric that moves verdicts. The two-way check changed no ranking or verdict on these three screens; it guards against one-sided audiences that these universes happen not to contain. Fame bias did not separate the two approaches here (Spearman with Qloo popularity, Qloo vs LLM-only: 0.17 vs −0.17, 0.48 vs 0.01, −0.28 vs −0.40).
+
 ## Actions and safety
 
 - **Approval-gated outreach.** Drafts are created for ADVANCE targets; nothing sends until a human approves it. The approval is bound to the draft, recipient, subject and SHA-256 of the body; any edit voids it. Sandbox mode is forced on in production, so every email goes to the builder's inbox and names the intended recipient, who is never contacted.
