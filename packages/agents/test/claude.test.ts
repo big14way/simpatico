@@ -142,6 +142,27 @@ describe('stored answers', () => {
     expect(calls).toHaveLength(3);
   });
 
+  it('rejects a ranking that skips most candidates: not stored, not replayed, asked once more', async () => {
+    const { cache, rows } = memoryCache();
+    const lazy = { stop_reason: 'end_turn', parsed_output: { ranking: ['A', 'Other'], notes: 'placeholder' } };
+    const full = { stop_reason: 'end_turn', parsed_output: { ranking: ['C', 'A', 'B', 'E', 'D'], notes: 'ok' } };
+    const input = { dealType: 'vc_thesis' as const, buyerName: 'X', proxies: [], candidates: ['A', 'B', 'C', 'D', 'E'] };
+    let n = 0;
+    const { client, calls } = fakeClient(() => (n++ === 0 ? lazy : full));
+    expect((await new ClaudeAgents({ client, cache }).rankWithoutQloo(input)).ranking).toEqual(['C', 'A', 'B', 'E', 'D']);
+    expect(calls).toHaveLength(2);
+    expect([...rows.values()].map((e) => (e.output as { notes: string }).notes)).toEqual(['ok']);
+
+    // a lazy answer already stored is ignored
+    for (const k of rows.keys()) rows.set(k, { ...rows.get(k)!, output: lazy.parsed_output });
+    await new ClaudeAgents({ client, cache }).rankWithoutQloo(input);
+    expect(calls).toHaveLength(3);
+
+    // two lazy answers in a row: the ablation is told, not handed input order
+    const stubborn = new ClaudeAgents({ client: fakeClient(() => lazy).client });
+    await expect(stubborn.rankWithoutQloo(input)).rejects.toThrow(/ranked only 1 of 5/);
+  });
+
   it('stores memo text too', async () => {
     const { cache } = memoryCache();
     const { client, calls } = fakeClient(() => ({ stop_reason: 'end_turn', content: [{ type: 'text', text: '## Memo' }] }));

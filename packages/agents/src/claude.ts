@@ -26,6 +26,14 @@ const ClaimsSchema = z.object({
   ),
 });
 const OutreachSchema = z.object({ subject: z.string(), body: z.string() });
+/** an answer that parsed but can't be used (for example a ranking that skips most candidates) */
+export class UnusableAnswerError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'UnusableAnswerError';
+  }
+}
+
 const RankingSchema = z.object({
   ranking: z.array(z.string()).describe('every candidate name exactly as given, best fit first'),
   notes: z.string().describe('one short paragraph on how you ranked'),
@@ -106,12 +114,21 @@ export class ClaudeAgents implements AgentSuite {
     }
   }
 
-  private async structured<S extends z.ZodType>(kind: string, schema: S, system: string, user: string, effort: Effort, meta?: CallMeta): Promise<z.infer<S>> {
+  /** `problem` names what makes a parsed answer unusable; such an answer is neither stored nor replayed. */
+  private async structured<S extends z.ZodType>(
+    kind: string,
+    schema: S,
+    system: string,
+    user: string,
+    effort: Effort,
+    meta?: CallMeta,
+    problem?: (out: z.infer<S>) => string | null,
+  ): Promise<z.infer<S>> {
     const key = this.cache ? this.cacheKey(kind, z.toJSONSchema(schema), system, user, effort) : null;
     if (key) {
       const hit = await this.recall(key);
       const parsed = hit ? schema.safeParse(hit.output) : null;
-      if (parsed?.success) {
+      if (parsed?.success && !problem?.(parsed.data)) {
         if (meta) meta.cached = true;
         return parsed.data;
       }
@@ -129,6 +146,8 @@ export class ClaudeAgents implements AgentSuite {
       if (!res.parsed_output) throw new Error('model returned no structured output');
       return { output: res.parsed_output as z.infer<S>, model: res.model, usage: res.usage };
     });
+    const unusable = problem?.(out.output);
+    if (unusable) throw new UnusableAnswerError(unusable);
     if (key) await this.remember(key, { kind, model: out.model ?? this.modelId, output: out.output, usage: tokens(out.usage) });
     return out.output;
   }
@@ -180,9 +199,22 @@ export class ClaudeAgents implements AgentSuite {
   }
 
   async rankWithoutQloo(input: AblationRankInput, meta?: CallMeta): Promise<{ ranking: string[]; notes: string }> {
-    const out = await this.structured('rank-no-qloo', RankingSchema, noQlooSystem(input), noQlooUser(input), this.effort, meta);
-    // keep it a permutation of the candidates: drop unknown names, append any it skipped
     const wanted = new Map(input.candidates.map((c) => [c.toLowerCase(), c]));
+    // a ranking that skips most candidates would be scored as input order: reject it and ask once more
+    const need = input.candidates.length - Math.max(1, Math.floor(0.2 * input.candidates.length));
+    const incomplete = (o: { ranking: string[] }) => {
+      const n = new Set(o.ranking.map((x) => wanted.get(x.trim().toLowerCase())).filter(Boolean)).size;
+      return n < need ? `model ranked only ${n} of ${input.candidates.length} candidates` : null;
+    };
+    const ask = () => this.structured('rank-no-qloo', RankingSchema, noQlooSystem(input), noQlooUser(input), this.effort, meta, incomplete);
+    let out: z.infer<typeof RankingSchema>;
+    try {
+      out = await ask();
+    } catch (err) {
+      if (!(err instanceof UnusableAnswerError)) throw err;
+      out = await ask();
+    }
+    // keep it a permutation of the candidates: drop unknown names, append any it skipped
     const seen = new Set<string>();
     const ranking: string[] = [];
     for (const n of out.ranking) {
