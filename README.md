@@ -46,12 +46,12 @@ A fresh screen of ~30 brands with a shortlist of 8–10 makes about 120–140 Ql
 
 ### Request to result, one target
 
-Buyer audience = Pepsi + Doritos + Gatorade + Quaker (four Qloo brand ids). Target = Bai.
+Buyer audience = Los Angeles Dodgers (one Qloo brand id). Universe = 25 apparel and streetwear labels (one ambiguous name was dropped at the confirm chip). Target = Mitchell & Ness.
 
-1. `GET /v2/insights?filter.type=urn:entity:brand&signal.interests.entities=<4 buyer ids>&filter.results.entities=<29 universe ids>&feature.explainability=true` → Bai's forward affinity *a* = 0.80, second in the universe behind Chobani; explainability shows which buyer brands drive it.
-2. `GET /v2/insights?filter.type=urn:entity:brand&signal.interests.entities=<Bai>&filter.results.entities=<4 buyer ids>` → reverse affinity per buyer brand, mean *b* = 0.76; m1 = 2ab / (a + b) = 0.78.
-3. Tag profiles, four domain cross-ranks, one shared demographics call, two heatmaps and trending complete m2–m6.
-4. Code computes F = 65.2 with 90% of the weighted evidence measured (momentum not measurable on current data), no red flags → **WATCH** under the calibrated bands. The memo, its numbers checked against the ledger, shows Bai's white space (Milwaukee, Omaha, Salt Lake City, Minneapolis, Kansas City) and the culture both audiences share.
+1. `GET /v2/insights?filter.type=urn:entity:brand&signal.interests.entities=<Dodgers>&filter.results.entities=<25 universe ids>&feature.explainability=true` → Mitchell & Ness's forward affinity *a* = 0.80, fourth of 25 behind '47, New Era and Nike. The same response carries Qloo's corporate profile: founded 1904, parent Fanatics, competitors New Era, Starter, Champion and Nike.
+2. `GET /v2/insights?filter.type=urn:entity:brand&signal.interests.entities=<Mitchell & Ness>&filter.results.entities=<Dodgers>` → reverse affinity *b* = 0.80, the same as *a*: between two single brands Qloo's affinity is symmetric, so the two-way check only adds information when the buyer audience is several brands. m1 = 2ab / (a + b) = 0.80.
+3. Tag profiles give m2 = 0.35 (26 shared tags of 74). Cross-ranks of the Dodgers audience's top 25 titles give m3 = 0.89: music 0.94 (Curren$y, Cam'ron), TV 0.90 (Ballers, Brockmire), film 0.86 (Coach Carter, Glory Road), podcasts 0.84. One shared demographics call gives m4 = 0.91; two heatmaps give m5 = 0.33, with white space in Philadelphia, New York, Chicago, Memphis, Atlanta, Detroit, Cleveland and Baltimore. Trending has no history for the window, so m6 is not measured.
+4. Code computes F = 68.5 with 95% of the weighted evidence measured and no red flags → **ADVANCE** (F ≥ 67), first of the 8 on the shortlist. The judge validates all 10 bull and bear claims, the memo passes the number check, and an outreach draft waits in the approval inbox.
 
 Every step is visible in the deal room's provenance drawer.
 
@@ -104,7 +104,7 @@ Results on the three showcase screens (Claude Opus 5.5 at low effort, 26 Oct 202
 | Verdicts that change without cross-domain (m3) | 2 | 5, incl. the only ADVANCE | 5, incl. 3 ADVANCE |
 | Verdicts that change without two-way affinity | 0 | 0 | 0 |
 
-Where the fit is famous (MLB's existing licensees), general knowledge lands close to Qloo's audience data; where it isn't (better-for-you brands against the PepsiCo audience), the LLM-only ranking is unrelated to it. Cross-domain agreement is the metric that moves verdicts. The two-way check changed no ranking or verdict on these three screens; it guards against one-sided audiences that these universes happen not to contain. Fame bias did not separate the two approaches here (Spearman with Qloo popularity, Qloo vs LLM-only: 0.17 vs −0.17, 0.48 vs 0.01, −0.28 vs −0.40).
+Where the fit is famous (MLB's existing licensees), general knowledge lands close to Qloo's audience data; where it isn't (better-for-you brands against the PepsiCo audience), the LLM-only ranking is unrelated to it. Cross-domain agreement is the metric that moves verdicts. The two-way check changed no ranking or verdict on these three screens: for the Dodgers' single-brand audience it equals forward affinity (Qloo's pairwise affinity is symmetric), and on the two multi-brand screens no target was one-sided. Fame bias did not separate the two approaches here (Spearman with Qloo popularity, Qloo vs LLM-only: 0.17 vs −0.17, 0.48 vs 0.01, −0.28 vs −0.40).
 
 ## Actions and safety
 
@@ -116,6 +116,7 @@ Where the fit is famous (MLB's existing licensees), general knowledge lands clos
 
 - Qloo's `/v2/trending` series on the hackathon dataset has not moved since mid-October 2025, and earlier history has universe-wide rank shifts. Momentum is therefore measured relative to the screened cohort and reported as *not measured* for flat windows; the monitor's historical replay uses 2024–2025 history.
 - `/v2/analysis/compare` compares catalogue tags rather than audiences, so cross-domain agreement is built from cross-rank calls.
+- Between two single brands Qloo's affinity is symmetric (the reverse call returns the forward value), so two-way affinity only differs from forward affinity when the buyer audience is several brands. That is why removing it changed nothing in the ablation above.
 - Qloo's graph is today's graph. The M&A showcase pins two brands PepsiCo has since agreed to buy (Siete, announced Oct 2024; poppi, Mar 2025) as a sanity check; that is look-ahead biased, not a prediction.
 - Small or new brands can have thin coverage; Simpatico reports that instead of guessing. Geographic footprint covers 55 US metros.
 
