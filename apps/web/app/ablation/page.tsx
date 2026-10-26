@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { AblationPanel, type Ablation } from '@/components/AblationPanel';
 import { getStore } from '@/lib/runtime';
 import type { Run } from '@/lib/data';
+import { when } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,7 +10,17 @@ export default async function AblationPage({ searchParams }: { searchParams: Pro
   const { runId } = await searchParams;
   const store = await getStore();
   const runs = ((await store.runs.list(40)) as Run[]).filter((r) => r.status === 'done');
-  const selected = runs.find((r) => r.id === runId) ?? runs.find((r) => r.scenario) ?? runs[0];
+  // one chip per screen (its latest run); an older run stays reachable by ?runId=
+  const title = (r: Run) => r.mandate.title ?? r.mandate.buyer.name;
+  const seen = new Set<string>();
+  const latestPerScreen = runs.filter((r) => {
+    if (seen.has(title(r))) return false;
+    seen.add(title(r));
+    return true;
+  });
+  const selected = runs.find((r) => r.id === runId) ?? latestPerScreen.find((r) => r.scenario) ?? latestPerScreen[0];
+  const chips = latestPerScreen.slice(0, 8);
+  if (selected && !chips.includes(selected)) chips.push(selected);
   const latest = selected ? await store.ablations.latestForRun<Ablation>(selected.id) : null;
   const names = selected ? Object.fromEntries((await store.targets.list(selected.id)).map((t) => [t.targetId, t.name])) : {};
   return (
@@ -26,9 +37,10 @@ export default async function AblationPage({ searchParams }: { searchParams: Pro
       ) : (
         <>
           <nav className="flex flex-wrap gap-2 text-sm" aria-label="Choose a screen">
-            {runs.slice(0, 8).map((r) => (
+            {chips.map((r) => (
               <Link key={r.id} href={`/ablation?runId=${r.id}`} className={`rounded-full border px-3 py-1 no-underline ${r.id === selected?.id ? 'border-s1 font-semibold text-ink' : 'border-line text-ink-2'}`}>
-                {r.mandate.title ?? r.mandate.buyer.name}
+                {title(r)}
+                {!latestPerScreen.includes(r) && <span className="text-muted"> ({when(r.createdAt)})</span>}
               </Link>
             ))}
           </nav>

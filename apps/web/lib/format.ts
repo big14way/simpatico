@@ -25,6 +25,16 @@ export function f1(x: unknown): string {
   return typeof x === 'number' && Number.isFinite(x) ? x.toFixed(1) : 'n/a';
 }
 
+/** Four significant digits for display: 0.8981596499915091 -> 0.8982, 70.13423682620956 -> 70.13. */
+export function num(x: number): string {
+  return Number.isFinite(x) && !Number.isInteger(x) ? String(Number(x.toPrecision(4))) : String(x);
+}
+
+/** Shortens full-precision decimals a model copied into its text (the stored claim keeps them). */
+export function tidyNumbers(text: string): string {
+  return text.replace(/-?\d+\.\d{5,}/g, (m) => num(Number(m)));
+}
+
 export function pct(x: unknown): string {
   return typeof x === 'number' && Number.isFinite(x) ? `${Math.round(x * 100)}%` : 'n/a';
 }

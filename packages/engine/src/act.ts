@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { DEAL_TYPE_LABELS, languageGuard, type MetricKey, type MetricResult } from '@simpatico/core';
 import { newId } from '@simpatico/qloo';
 import type { PipelineStage, TargetRecord } from '@simpatico/store';
+import type { EngineDeps } from './context';
 import type { RunCtx } from './run-context';
 
 export function sha256(text: string): string {
@@ -66,6 +67,25 @@ export function templateOutreach(dealType: keyof typeof DEAL_TYPE_LABELS, buyerN
   return { subject: `${buyerName} x ${targetName}: exploring a partnership`, body };
 }
 
+/**
+ * Withdraws drafts still waiting for approval whose deal is no longer ADVANCE (re-scored lower,
+ * or dropped from the shortlist), so nothing stale can be approved. Scoped to one buyer and
+ * deal type when given. Returns how many were withdrawn.
+ */
+export async function withdrawStaleDrafts(store: EngineDeps['store'], scope?: { buyerKey: string; dealType: string; runId: string }): Promise<number> {
+  let withdrawn = 0;
+  for (const d of await store.outreach.list()) {
+    if (d.status !== 'pending' || !d.pipelineId) continue;
+    const deal = await store.pipeline.get(d.pipelineId);
+    if (scope && (!deal || deal.buyerKey !== scope.buyerKey || deal.dealType !== scope.dealType)) continue;
+    if (deal?.verdict === 'ADVANCE') continue;
+    const now = deal ? `${deal.verdict.replace('_', ' ')}` : 'removed';
+    await store.outreach.update(d.id, { status: 'rejected', error: `Withdrawn: the deal is no longer ADVANCE (now ${now}${scope ? ` after ${scope.runId}` : ''}).` });
+    withdrawn++;
+  }
+  return withdrawn;
+}
+
 /** Stage 9: update the pipeline, draft approval-gated outreach, register targets with the monitor. */
 export async function stageAct(ctx: RunCtx): Promise<void> {
   const buyer = ctx.state.buyer!;
@@ -128,6 +148,8 @@ export async function stageAct(ctx: RunCtx): Promise<void> {
     retired++;
   }
   if (retired) await ctx.emit('info', `${retired} earlier deal(s) not shortlisted this time are no longer monitored.`);
+  const withdrawn = await withdrawStaleDrafts(ctx.deps.store, { buyerKey: buyer.signalIds[0]!, dealType: ctx.mandate.dealType, runId: ctx.runId });
+  if (withdrawn) await ctx.emit('info', `Withdrew ${withdrawn} outreach draft(s) whose deal is no longer ADVANCE.`);
 
   if (ctx.deps.store && (await ctx.deps.store.runs.get(ctx.runId))?.scenario) {
     const pinned = await ctx.deps.store.cache.pinForRun(ctx.runId);

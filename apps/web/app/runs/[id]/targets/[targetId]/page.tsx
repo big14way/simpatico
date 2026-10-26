@@ -10,7 +10,7 @@ import { Provenance } from '@/components/Provenance';
 import { Sparkline } from '@/components/Sparkline';
 import { VerdictBadge } from '@/components/VerdictBadge';
 import { loadDealRoom } from '@/lib/data';
-import { dealTypeLabel, f1, f2, pct } from '@/lib/format';
+import { dealTypeLabel, f1, f2, num, pct, tidyNumbers } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,13 +30,13 @@ function ClaimCard({ c }: { c: ClaimRecord }) {
   return (
     <li className={`rounded-lg border p-3 text-sm ${c.accepted ? 'border-line bg-surface' : 'border-dashed border-critical bg-surface-2'}`}>
       <div className="flex items-start justify-between gap-2">
-        <p className={c.accepted ? 'text-ink' : 'text-ink-2'}>{c.text}</p>
+        <p className={c.accepted ? 'text-ink' : 'text-ink-2'}>{tidyNumbers(c.text)}</p>
         {c.flag && <span className="shrink-0 rounded border border-line px-1.5 py-0.5 text-[11px] font-semibold">{c.flag}</span>}
       </div>
       <div className="mt-1.5 flex flex-wrap gap-1.5">
         {c.cites.map((x, i) => (
-          <code key={i} className="rounded bg-surface-2 px-1.5 py-0.5 text-[11px] text-ink-2">
-            {x.evidenceId}.{x.path} = {x.value}
+          <code key={i} className="rounded bg-surface-2 px-1.5 py-0.5 text-[11px] text-ink-2" title={`${x.evidenceId}.${x.path} = ${x.value}`}>
+            {x.evidenceId}.{x.path} = {num(x.value)}
           </code>
         ))}
       </div>
