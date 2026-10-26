@@ -12,6 +12,13 @@ export interface Scenario {
 const names = (xs: string[]) => xs.map((name) => ({ name }));
 
 /**
+ * Showcases are pinned to one momentum window so a re-run sees the same evidence: its Qloo
+ * trending calls replay from the pinned cache and its Claude answers from the stored ones.
+ * (Qloo's trending series has been flat since mid-October 2025, so the window costs nothing.)
+ */
+export const SHOWCASE_AS_OF = '2026-10-24';
+
+/**
  * Illustrative public-data examples. They make no claim about any company's actual plans.
  */
 export const SCENARIOS: Scenario[] = [
@@ -39,6 +46,7 @@ export const SCENARIOS: Scenario[] = [
       // Keep brands the buyer already owns visible: the back-test asks where they land.
       excludeOwned: false,
       shortlistSize: 8,
+      momentumAsOf: SHOWCASE_AS_OF,
     },
   },
   {
@@ -59,6 +67,7 @@ export const SCENARIOS: Scenario[] = [
       ]),
       excludeOwned: true,
       shortlistSize: 8,
+      momentumAsOf: SHOWCASE_AS_OF,
     },
   },
   {
@@ -78,6 +87,7 @@ export const SCENARIOS: Scenario[] = [
       ]),
       excludeOwned: true,
       shortlistSize: 8,
+      momentumAsOf: SHOWCASE_AS_OF,
     },
   },
 ];

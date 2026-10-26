@@ -1,3 +1,4 @@
+import type { CallMeta } from '@simpatico/agents';
 import { decideVerdict, judgeClaims, modelView, type Claim, type EvidenceRow, type FlagHit, type RedFlag } from '@simpatico/core';
 import { newId } from '@simpatico/qloo';
 import type { ClaimRecord, TargetRecord } from '@simpatico/store';
@@ -26,21 +27,31 @@ export async function stageDebate(ctx: RunCtx): Promise<void | 'partial'> {
 
   // a few targets at a time keeps model rate limits happy
   const queue = [...targets];
+  const answers = { total: 0, cached: 0 };
   const worker = async () => {
     for (let t = queue.shift(); t; t = queue.shift()) {
       if (ctx.shouldYield()) {
         queue.unshift(t);
         return;
       }
-      await debateOne(ctx, t, buyerName, cfg);
+      await debateOne(ctx, t, buyerName, cfg, answers);
       ctx.progress();
     }
   };
   await Promise.all([worker(), worker(), worker(), worker()]);
+  if (answers.cached > 0) {
+    await ctx.emit('info', `${answers.cached} of ${answers.total} debate answers were replayed from stored Claude answers (same model, prompt and evidence); the judge re-checked every claim.`);
+  }
   return queue.length > 0 ? 'partial' : undefined;
 }
 
-async function debateOne(ctx: RunCtx, t: TargetRecord, buyerName: string, cfg: Awaited<ReturnType<typeof scoringConfig>>): Promise<void> {
+async function debateOne(
+  ctx: RunCtx,
+  t: TargetRecord,
+  buyerName: string,
+  cfg: Awaited<ReturnType<typeof scoringConfig>>,
+  answers: { total: number; cached: number },
+): Promise<void> {
   const agents = ctx.deps.agents!;
   const pack = (await ctx.deps.store.evidence.list(ctx.runId, t.targetId)) as EvidenceRow[];
   const flags = (t.flags ?? []) as FlagHit[];
@@ -56,8 +67,12 @@ async function debateOne(ctx: RunCtx, t: TargetRecord, buyerName: string, cfg: A
   };
 
   const argue = async (side: 'bull' | 'bear'): Promise<Claim[]> => {
+    const meta: CallMeta = {};
     try {
-      return await agents.argue({ ...base, side });
+      const claims = await agents.argue({ ...base, side }, meta);
+      answers.total++;
+      if (meta.cached) answers.cached++;
+      return claims;
     } catch (err) {
       await ctx.emit('warn', `${side} agent failed for ${t.name}: ${(err as Error).message}`);
       return [];

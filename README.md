@@ -42,7 +42,7 @@ All calls go to `https://hackathon.api.qloo.com` with the `X-Api-Key` header, th
 | `/v2/trending` | `signal.interests.entities=<brand>`, `filter.start_date`, `filter.end_date` | Momentum (m6), per brand in the cohort |
 | `/v2/analysis/compare` | `a.signal.interests.entities=<buyer>`, `b.signal.interests.entities=<target>` | Shared catalogue categories (debate context) |
 
-A fresh screen of ~30 brands with a shortlist of 8–10 makes about 120–140 Qloo calls; cached re-runs make almost none. Responses are cached **privately on the server** (24 h, 6 h for trending); recorded showcase responses are pinned so the demo keeps working. No Qloo response data is stored in this repository.
+A fresh screen of ~30 brands with a shortlist of 8–10 makes about 120–140 Qloo calls; cached re-runs make almost none. Responses are cached **privately on the server** (24 h, 6 h for trending); recorded showcase responses are pinned so the demo keeps working, and the three showcases use a fixed momentum window (to 2026-10-24) so a re-run sees the same evidence. No Qloo response data is stored in this repository.
 
 ### Request to result, one target
 
@@ -118,7 +118,7 @@ packages/agents     Claude agents: bull, bear, memo writer, outreach drafter, no
 packages/actions    approvals, sandboxed email (Resend), Slack alerts
 ```
 
-The agents use the Anthropic TypeScript SDK on `claude-opus-5-5` with structured outputs and server-side refusal fallbacks. Without `ANTHROPIC_API_KEY` the debate is skipped and memos are written from a ledger template.
+The agents use the Anthropic TypeScript SDK on `claude-opus-5-5` with structured outputs and server-side refusal fallbacks. The live demo runs them at `LLM_EFFORT=low`: on a real evidence pack, one target's bull and bear cost about $0.09 at low effort against $0.13 at high, and the code judge accepted all ten claims either way. Answers are stored in Postgres keyed by a hash of model, effort, prompts and output schema, so re-running a showcase replays the same debate without another model call; the judge and the memo number checker still run on every replay, and the run log and memo say when an answer was stored. Without `ANTHROPIC_API_KEY` the debate is skipped and memos are written from a ledger template.
 
 **Hosting.** The live demo runs on Vercel (functions pinned to `cle1`, next to the Neon Postgres database in us-east-2). Serverless functions stop at 300 seconds, so a screen runs in budgeted slices: each worker holds a database lease, stops between stages (and between targets in the debate and memo stages) when its budget is spent, and hands the rest to a fresh invocation through a signed internal call; a stalled run restarts when someone views it. The same app also runs as one long-lived container (`Dockerfile`, built in CI), where none of that is needed.
 
@@ -131,7 +131,7 @@ git clone https://github.com/big14way/simpatico && cd simpatico
 pnpm install
 cp .env.example .env          # add QLOO_API_KEY (and optionally ANTHROPIC_API_KEY, DATABASE_URL)
 ln -s ../../.env apps/web/.env
-pnpm test                     # 117 unit and integration tests, no network needed
+pnpm test                     # 123 unit and integration tests, no network needed
 pnpm dev                      # http://localhost:3000
 ```
 

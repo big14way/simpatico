@@ -25,7 +25,7 @@ const deps: EngineDeps = {
   transport: new RestTransport({ apiKey: process.env.QLOO_API_KEY, baseUrl: process.env.QLOO_BASE_URL }),
   limiter: new Limiter({ ratePerSec: 4, burst: 8, concurrency: Number(process.env.QLOO_CONCURRENCY ?? 4) }),
   mode: 'live',
-  agents: buildAgents(process.env),
+  agents: buildAgents(process.env, { cache: store.llm }),
 };
 console.log(`agents: ${deps.agents?.model ?? 'none (debate skipped, template memos)'}`);
 

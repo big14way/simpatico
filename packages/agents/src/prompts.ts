@@ -58,7 +58,7 @@ export function memoSystem(i: MemoInput): string {
 Use only the facts in the user message. A code checker compares every number in your memo with the ledger and blocks the memo if any number is not there:
 - Use numbers exactly as given. You may round a 0-1 value to 2 decimals, write F with 1 decimal, or write a 0-1 value as a percentage.
 - Do not compute new numbers (no differences, ratios, sums or averages of your own).
-- Dates: only ${i.runDate} (run date) and ${i.momentumAsOf} (momentum window end).
+- Dates: only ${i.momentumAsOf} (momentum window end).
 - Prefer words over numbers when a number adds nothing.
 
 ${SAFE_USE}

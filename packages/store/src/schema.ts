@@ -36,6 +36,16 @@ CREATE TABLE IF NOT EXISTS qloo_evidence (
 );
 CREATE INDEX IF NOT EXISTS qloo_evidence_run_idx ON qloo_evidence (run_id, created_at);
 
+-- stored model answers, keyed by sha256 of model + effort + prompts + output schema
+CREATE TABLE IF NOT EXISTS llm_response (
+  cache_key    text PRIMARY KEY,
+  kind         text NOT NULL,
+  model        text NOT NULL,
+  output       jsonb NOT NULL,
+  usage        jsonb,
+  created_at   timestamptz NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS runs (
   id           text PRIMARY KEY,
   kind         text NOT NULL DEFAULT 'screen',

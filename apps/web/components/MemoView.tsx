@@ -10,6 +10,7 @@ interface Checks {
   numbersChecked?: number;
   repaired?: boolean;
   source?: 'llm' | 'template';
+  cached?: boolean;
 }
 
 type HastNode = { type: string; value?: string; tagName?: string; properties?: Record<string, unknown>; children?: HastNode[] };
@@ -66,7 +67,9 @@ export function MemoView({ markdown, checks, model, filename }: { markdown: stri
             : `Blocked from export: ${unverified.length} number(s) not in the ledger${language.length ? `, ${language.length} wording issue(s)` : ''} (highlighted).`}
         </span>
         <span className="flex items-center gap-2 text-xs text-muted">
-          {checks.source === 'llm' ? `Written by ${model ?? 'the model'}${checks.repaired ? ' (after one repair pass)' : ''}` : 'Written from the ledger template'}
+          {checks.source === 'llm'
+            ? `Written by ${model ?? 'the model'}${checks.repaired ? ' (after one repair pass)' : ''}${checks.cached ? '; stored answer for the same prompt and evidence' : ''}`
+            : 'Written from the ledger template'}
           <button type="button" className="btn btn-ghost !px-2 !py-0.5 !text-xs" disabled={!ok} onClick={download} title={ok ? 'Download Markdown' : 'Fix the flagged numbers first'}>
             Export .md
           </button>

@@ -836,6 +836,33 @@ export class SettingsRepo {
   }
 }
 
+// ------------------------------------------------------------------ model answers
+
+/** Stored Claude answers (the agents' LlmCache). A key is written once; later writes keep the first answer. */
+export class LlmCacheRepo {
+  constructor(private readonly db: Db) {}
+
+  async get(key: string): Promise<{ kind: string; model: string; output: unknown; usage: { inputTokens: number; outputTokens: number } | null } | null> {
+    const rows = await this.db.query<Row>('SELECT kind, model, output, usage FROM llm_response WHERE cache_key = $1', [key]);
+    const r = rows[0];
+    return r ? { kind: String(r.kind), model: String(r.model), output: r.output, usage: (r.usage as { inputTokens: number; outputTokens: number } | null) ?? null } : null;
+  }
+
+  async put(key: string, entry: { kind: string; model: string; output: unknown; usage: { inputTokens: number; outputTokens: number } | null }): Promise<void> {
+    await this.db.query(
+      `INSERT INTO llm_response (cache_key, kind, model, output, usage)
+       VALUES ($1, $2, $3, $4::jsonb, $5::jsonb)
+       ON CONFLICT (cache_key) DO NOTHING`,
+      [key, entry.kind, entry.model, j(entry.output), entry.usage === null ? null : j(entry.usage)],
+    );
+  }
+
+  async stats(): Promise<{ answers: number }> {
+    const rows = await this.db.query<{ answers: number }>('SELECT count(*)::int AS answers FROM llm_response');
+    return rows[0] ?? { answers: 0 };
+  }
+}
+
 // ------------------------------------------------------------------ bundle
 
 export interface Store {
@@ -852,6 +879,7 @@ export interface Store {
   monitor: MonitorRepo;
   ablations: AblationRepo;
   settings: SettingsRepo;
+  llm: LlmCacheRepo;
 }
 
 export function createStore(db: Db): Store {
@@ -869,5 +897,6 @@ export function createStore(db: Db): Store {
     monitor: new MonitorRepo(db),
     ablations: new AblationRepo(db),
     settings: new SettingsRepo(db),
+    llm: new LlmCacheRepo(db),
   };
 }

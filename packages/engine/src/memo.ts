@@ -12,7 +12,7 @@ import {
   type MetricKey,
   type MetricResult,
 } from '@simpatico/core';
-import type { MemoInput } from '@simpatico/agents';
+import type { CallMeta, MemoInput } from '@simpatico/agents';
 import type { ClaimRecord, TargetRecord } from '@simpatico/store';
 import { scoringConfig } from './context';
 import type { RunCtx } from './run-context';
@@ -31,6 +31,8 @@ export interface MemoChecks {
   numbersChecked: number;
   repaired: boolean;
   source: 'llm' | 'template';
+  /** the model's answer was a stored one (same model, prompt and evidence) */
+  cached?: boolean;
 }
 
 /** Numbers a memo may use: everything in the target's evidence, plus the rules it is judged by. */
@@ -141,7 +143,6 @@ export async function stageMemo(ctx: RunCtx): Promise<void | 'partial'> {
       dealType: ctx.mandate.dealType,
       buyerName,
       title: ctx.mandate.title ?? `${buyerName} screen`,
-      runDate: ctx.state.runDate,
       momentumAsOf: ctx.state.asOf,
       shortlistSize: ranked.length,
       target: {
@@ -163,22 +164,25 @@ export async function stageMemo(ctx: RunCtx): Promise<void | 'partial'> {
     let source: MemoChecks['source'] = 'template';
     let repaired = false;
     let checks;
+    const meta: CallMeta = {};
     if (ctx.deps.agents) {
       try {
-        markdown = await ctx.deps.agents.writeMemo(input);
+        markdown = await ctx.deps.agents.writeMemo(input, meta);
         source = 'llm';
         checks = runChecks(markdown, allowed, dates, maxCount, knownNames);
         if (!checks.ok) {
           // one repair attempt: tell the writer exactly what failed
-          const fixed = await ctx.deps.agents.writeMemo({
-            ...input,
-            repair: { previous: markdown, unverifiedNumbers: checks.unverifiedNumbers, language: checks.language.map((l) => l.match) },
-          });
+          const repairMeta: CallMeta = {};
+          const fixed = await ctx.deps.agents.writeMemo(
+            { ...input, repair: { previous: markdown, unverifiedNumbers: checks.unverifiedNumbers, language: checks.language.map((l) => l.match) } },
+            repairMeta,
+          );
           const fixedChecks = runChecks(fixed, allowed, dates, maxCount, knownNames);
           repaired = true;
           if (fixedChecks.unverifiedNumbers.length + fixedChecks.language.length <= checks.unverifiedNumbers.length + checks.language.length) {
             markdown = fixed;
             checks = fixedChecks;
+            meta.cached = !!(meta.cached && repairMeta.cached);
           }
         }
       } catch (err) {
@@ -191,7 +195,7 @@ export async function stageMemo(ctx: RunCtx): Promise<void | 'partial'> {
       markdown = templateMemo(input, metrics, flags, bull, bear);
       checks = runChecks(markdown, allowed, dates, maxCount, knownNames);
     }
-    const full: MemoChecks = { ...checks, repaired, source };
+    const full: MemoChecks = { ...checks, repaired, source, ...(source === 'llm' && meta.cached ? { cached: true } : {}) };
     await ctx.deps.store.memos.upsert({
       id: `memo_${ctx.runId}_${t.key ?? t.targetId}`,
       runId: ctx.runId,

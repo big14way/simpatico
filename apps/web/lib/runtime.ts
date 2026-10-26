@@ -27,7 +27,7 @@ export function getDeps(): Promise<EngineDeps> {
         transport: env.QLOO_API_KEY ? new RestTransport({ apiKey: env.QLOO_API_KEY, baseUrl: env.QLOO_BASE_URL || undefined }) : null,
         limiter: new Limiter({ ratePerSec: 4, burst: 8, concurrency: Math.max(1, Math.min(8, Number(env.QLOO_CONCURRENCY ?? 4) || 4)) }),
         mode: demoMode(),
-        agents: buildAgents(env),
+        agents: buildAgents(env, { cache: store.llm }),
         notifier: actions.notifier,
         mailer: actions.mailer,
         mirror: actions.mirror,

@@ -36,7 +36,6 @@ export interface MemoInput {
   dealType: DealType;
   buyerName: string;
   title: string;
-  runDate: string;
   momentumAsOf: string;
   shortlistSize: number;
   target: MemoTargetInput;
@@ -59,12 +58,30 @@ export interface AblationRankInput {
   candidates: string[];
 }
 
+/** A stored model answer. Its key covers everything that shaped it: model, effort, prompts, output schema. */
+export interface LlmCacheEntry {
+  kind: string;
+  model: string;
+  output: unknown;
+  usage: { inputTokens: number; outputTokens: number } | null;
+}
+
+export interface LlmCache {
+  get(key: string): Promise<LlmCacheEntry | null>;
+  put(key: string, entry: LlmCacheEntry): Promise<void>;
+}
+
+/** Filled in by a call, so a stage can say how many answers were replayed from the cache. */
+export interface CallMeta {
+  cached?: boolean;
+}
+
 export interface AgentSuite {
   /** provider/model label shown in the UI */
   readonly model: string;
-  argue(input: DebateInput): Promise<Claim[]>;
-  writeMemo(input: MemoInput): Promise<string>;
-  draftOutreach(input: OutreachInput): Promise<{ subject: string; body: string }>;
+  argue(input: DebateInput, meta?: CallMeta): Promise<Claim[]>;
+  writeMemo(input: MemoInput, meta?: CallMeta): Promise<string>;
+  draftOutreach(input: OutreachInput, meta?: CallMeta): Promise<{ subject: string; body: string }>;
   /** ablation: the same model ranking the same universe with no Qloo data */
-  rankWithoutQloo(input: AblationRankInput): Promise<{ ranking: string[]; notes: string }>;
+  rankWithoutQloo(input: AblationRankInput, meta?: CallMeta): Promise<{ ranking: string[]; notes: string }>;
 }

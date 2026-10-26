@@ -23,6 +23,18 @@ describe('schema', () => {
   });
 });
 
+describe('stored model answers', () => {
+  it('round-trips structured and text answers and keeps the first write', async () => {
+    expect(await store.llm.get('k1')).toBeNull();
+    await store.llm.put('k1', { kind: 'argue:bull', model: 'claude-opus-5-5', output: { claims: [{ text: 'x' }] }, usage: { inputTokens: 10, outputTokens: 2 } });
+    await store.llm.put('k1', { kind: 'argue:bull', model: 'other', output: { claims: [] }, usage: null });
+    expect(await store.llm.get('k1')).toEqual({ kind: 'argue:bull', model: 'claude-opus-5-5', output: { claims: [{ text: 'x' }] }, usage: { inputTokens: 10, outputTokens: 2 } });
+    await store.llm.put('k2', { kind: 'memo', model: 'claude-opus-5-5', output: '## Memo\n"quoted"', usage: null });
+    expect(await store.llm.get('k2')).toEqual({ kind: 'memo', model: 'claude-opus-5-5', output: '## Memo\n"quoted"', usage: null });
+    expect((await store.llm.stats()).answers).toBe(2);
+  });
+});
+
 describe('Qloo cache + evidence (backing the gateway)', () => {
   it('works end to end with QlooClient', async () => {
     let calls = 0;
