@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_BANDS, DEFAULT_FLAG_THRESHOLDS, DEFAULT_WEIGHTS } from '../src/config';
+import { DEFAULT_BANDS, DEFAULT_FLAG_THRESHOLDS, DEFAULT_WEIGHTS, defaultMomentumAsOf } from '../src/config';
 import { composite } from '../src/score';
 import { redFlags } from '../src/flags';
 import { decideVerdict } from '../src/verdict';
@@ -136,6 +136,20 @@ describe('evidence rows and the judge', () => {
     ]);
   });
 
+  it('lets a bear call incomplete coverage a weakness even when it beats the shortlist average', () => {
+    const tC = metrics({ m1: 0.7, m2: 0.3, m3: 0.8, m4: 0.6, m5: 0.5, m6: null });
+    const tD = metrics({ m1: 0.6, m2: 0.3, m3: 0.7, m4: 0.6, m5: null, m6: null });
+    const r = buildEvidenceRows([
+      { targetKey: 't1', targetId: 'C', targetName: 'Brand C', metrics: tC, composite: composite(tC, DEFAULT_WEIGHTS.ma_bolt_on, 0.6), flags: [] },
+      { targetKey: 't2', targetId: 'D', targetName: 'Brand D', metrics: tD, composite: composite(tD, DEFAULT_WEIGHTS.ma_bolt_on, 0.6), flags: [] },
+    ]);
+    const packC = r.get('C')!;
+    const score = packC.find((x) => x.id === 't1-score')!;
+    expect(score.polarity).not.toHaveProperty('coverage');
+    const out = judgeClaims({ side: 'bear', claims: [bear('Momentum is unmeasured, so coverage is incomplete', [cite('t1-score', 'coverage', 0.9)])], pack: packC, computedFlags: [] });
+    expect(out.accepted).toHaveLength(1);
+  });
+
   it('enforces direction and polarity', () => {
     const wrongSide = judgeClaims({ side: 'bull', claims: [bear('x', [cite('t1-m1', 'value', 0.7)])], pack: packA, computedFlags: [] });
     expect(wrongSide.rejected[0]!.reason).toMatch(/must have direction "\+"/);
@@ -205,5 +219,12 @@ describe('number checker never masks bare numbers', () => {
     const r = checkNumbers({ text: 'Brand 47 scores F 52.1.', allowed: [], knownNames: ['47'] });
     expect(r.unverified.map((n) => n.raw)).toEqual(['52.1']);
     expect(checkNumbers({ text: 'Brand 47 scores F 52.1.', allowed: [], knownNames: [] }).unverified.map((n) => n.raw)).toEqual(['47', '52.1']);
+  });
+});
+
+describe('momentum window', () => {
+  it('defaults to the last date Qloo\'s trending series moves, or the run date if earlier', () => {
+    expect(defaultMomentumAsOf('2026-10-26')).toBe('2025-10-01');
+    expect(defaultMomentumAsOf('2025-06-30')).toBe('2025-06-30');
   });
 });

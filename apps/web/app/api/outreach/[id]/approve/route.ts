@@ -2,6 +2,7 @@ import { approveAndSend } from '@simpatico/actions';
 import { getDeps } from '@/lib/runtime';
 import { body, clientIp, fail, json } from '@/lib/http';
 import { allowPerHour } from '@/lib/ratelimit';
+import { publicDraft } from '@/lib/drafts';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +20,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       body: String(b.body ?? '').slice(0, 5000),
       approvedBy: (b.approvedBy ?? 'demo reviewer').slice(0, 80),
     });
-    return json({ draft, sandbox: deps.mailer.sandbox, provider: deps.mailer.provider });
+    return json({ draft: publicDraft(draft), sandbox: deps.mailer.sandbox, provider: deps.mailer.provider });
   } catch (err) {
     return fail(err);
   }

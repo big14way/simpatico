@@ -42,7 +42,7 @@ All calls go to `https://hackathon.api.qloo.com` with the `X-Api-Key` header, th
 | `/v2/trending` | `signal.interests.entities=<brand>`, `filter.start_date`, `filter.end_date` | Momentum (m6), per brand in the cohort |
 | `/v2/analysis/compare` | `a.signal.interests.entities=<buyer>`, `b.signal.interests.entities=<target>` | Shared catalogue categories (debate context) |
 
-A fresh screen of ~30 brands with a shortlist of 8–10 makes about 120–140 Qloo calls; cached re-runs make almost none. Responses are cached **privately on the server** (24 h, 6 h for trending); recorded showcase responses are pinned so the demo keeps working, and the three showcases use a fixed momentum window (to 2026-10-24) so a re-run sees the same evidence. No Qloo response data is stored in this repository.
+A fresh screen of ~30 brands with a shortlist of 8–10 makes about 120–140 Qloo calls; cached re-runs make almost none. Responses are cached **privately on the server** (24 h, 6 h for trending); recorded showcase responses are pinned so the demo keeps working, and momentum uses the 24 weeks to 1 Oct 2025, the latest window in which Qloo's trending series moves, so a re-run sees the same evidence. No Qloo response data is stored in this repository.
 
 ### Request to result, one target
 
@@ -114,7 +114,7 @@ Where the fit is famous (MLB's existing licensees), general knowledge lands clos
 
 ## Known limitations
 
-- Qloo's `/v2/trending` series on the hackathon dataset has not moved since mid-October 2025, and earlier history has universe-wide rank shifts. Momentum is therefore measured relative to the screened cohort and reported as *not measured* for flat windows; the monitor's historical replay uses 2024–2025 history.
+- Qloo's `/v2/trending` series on the hackathon dataset has not moved since mid-October 2025, and earlier history has universe-wide rank shifts. Momentum is therefore measured relative to the screened cohort, defaults to the window ending 1 Oct 2025 (a later as-of date reports it as *not measured*), and the weekly monitor's live momentum alerts can't fire until the series moves again; its historical replay uses 2024–2025 history.
 - `/v2/analysis/compare` compares catalogue tags rather than audiences, so cross-domain agreement is built from cross-rank calls.
 - Between two single brands Qloo's affinity is symmetric (the reverse call returns the forward value), so two-way affinity only differs from forward affinity when the buyer audience is several brands. That is why removing it changed nothing in the ablation above.
 - Qloo's graph is today's graph. The M&A showcase pins two brands PepsiCo has since agreed to buy (Siete, announced Oct 2024; poppi, Mar 2025) as a sanity check; that is look-ahead biased, not a prediction.
@@ -145,7 +145,7 @@ git clone https://github.com/big14way/simpatico && cd simpatico
 pnpm install
 cp .env.example .env          # add QLOO_API_KEY (and optionally ANTHROPIC_API_KEY, DATABASE_URL)
 ln -s ../../.env apps/web/.env
-pnpm test                     # 128 unit and integration tests, no network needed
+pnpm test                     # 131 unit and integration tests, no network needed
 pnpm dev                      # http://localhost:3000
 ```
 

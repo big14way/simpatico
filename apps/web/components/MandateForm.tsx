@@ -223,7 +223,7 @@ export function MandateForm({ examples, qlooReady }: { examples: Example[]; qloo
         <label className="space-y-1">
           <span className="label">Momentum as-of (optional)</span>
           <input className="input" type="date" value={asOf} onChange={(e) => setAsOf(e.target.value)} />
-          <span className="block text-xs text-muted">Defaults to today. Qloo&rsquo;s trending series has not moved since Oct 2025, so recent windows show momentum as not measured.</span>
+          <span className="block text-xs text-muted">Defaults to 1 Oct 2025: Qloo&rsquo;s trending series is flat after mid-October 2025, so a later date shows momentum as not measured.</span>
         </label>
         <div className="space-y-2 pt-6 text-sm">
           <label className="flex items-start gap-2">

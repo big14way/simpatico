@@ -16,7 +16,8 @@ export const POLARITY: Record<MetricKey | 'score', Record<string, 1 | -1 | 0>> =
   m4: { value: 1, cosine: 1 },
   m5: { value: 1, correlation: 1 },
   m6: { value: 1, z: 1 },
-  score: { F: 1, coverage: 1 },
+  // coverage is descriptive: below 1 it is a fair weakness on its own, whatever the shortlist average
+  score: { F: 1 },
 };
 
 /** Bulky arrays the models don't need to read (the judge still resolves against full data). */

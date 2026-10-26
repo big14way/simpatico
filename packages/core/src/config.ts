@@ -83,6 +83,17 @@ export const CROSS_DOMAINS = [
 export const TASTE_PROFILE_TAKE = 50;
 export const CROSS_DOMAIN_TAKE = 25;
 export const MOMENTUM_WEEKS = 24;
+/**
+ * The last day Qloo's trending series moves on the hackathon dataset: after mid-October 2025 every
+ * brand's series is flat, so a later window can't measure momentum. Momentum defaults to the window
+ * ending here (or the run date, if earlier).
+ */
+export const TRENDING_MOVES_UNTIL = '2025-10-01';
+
+/** The momentum window's end when the mandate doesn't set one. */
+export function defaultMomentumAsOf(runDate: string): string {
+  return runDate < TRENDING_MOVES_UNTIL ? runDate : TRENDING_MOVES_UNTIL;
+}
 
 export function normalizeWeights(w: Weights): Weights {
   const total = (Object.values(w) as number[]).reduce((a, b) => a + b, 0);

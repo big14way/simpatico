@@ -1,3 +1,4 @@
+import { TRENDING_MOVES_UNTIL } from '@simpatico/core';
 import type { MandateInput } from './mandate';
 
 export interface Scenario {
@@ -12,11 +13,11 @@ export interface Scenario {
 const names = (xs: string[]) => xs.map((name) => ({ name }));
 
 /**
- * Showcases are pinned to one momentum window so a re-run sees the same evidence: its Qloo
- * trending calls replay from the pinned cache and its Claude answers from the stored ones.
- * (Qloo's trending series has been flat since mid-October 2025, so the window costs nothing.)
+ * Showcases are pinned to one momentum window: the latest in which Qloo's trending series moves,
+ * so momentum is measured, and a re-run sees the same evidence (its Qloo trending calls replay
+ * from the pinned cache and its Claude answers from the stored ones).
  */
-export const SHOWCASE_AS_OF = '2026-10-24';
+export const SHOWCASE_AS_OF = TRENDING_MOVES_UNTIL;
 
 /**
  * Illustrative public-data examples. They make no claim about any company's actual plans.

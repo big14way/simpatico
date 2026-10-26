@@ -1,3 +1,4 @@
+import { defaultMomentumAsOf } from '@simpatico/core';
 import { QlooRequiredError, newId, type DemoMode } from '@simpatico/qloo';
 import { stageAct } from './act';
 import { stageAnalyze } from './analyze';
@@ -43,7 +44,7 @@ export async function startRun(deps: EngineDeps, input: MandateInput, opts: Star
   const mandate = parseMandate(input);
   const id = newId('run');
   const runDate = today(deps);
-  const state: RunState = { runDate, asOf: mandate.momentumAsOf ?? runDate, meta: { refresh: !!opts.refresh } };
+  const state: RunState = { runDate, asOf: mandate.momentumAsOf ?? defaultMomentumAsOf(runDate), meta: { refresh: !!opts.refresh } };
   await deps.store.runs.create({ id, scenario: opts.scenario ?? null, stage: 'resolve', mandate, demoMode: opts.refresh ? 'live' : deps.mode });
   await deps.store.runs.update(id, { state });
   const job = drive(deps, id, opts.drive).then(() => undefined);

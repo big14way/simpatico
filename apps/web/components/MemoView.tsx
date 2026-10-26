@@ -85,7 +85,11 @@ export function MemoView({ markdown, checks, model, filename }: { markdown: stri
         </ul>
       )}
       <article className="prose-memo text-sm text-ink">
-        <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[markTokens([...unverified, ...language.map((l) => l.match)])]}>
+        <Markdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[markTokens([...unverified, ...language.map((l) => l.match)])]}
+          components={{ table: ({ node: _node, ...props }) => <div className="overflow-x-auto"><table {...props} /></div> }}
+        >
           {markdown}
         </Markdown>
       </article>

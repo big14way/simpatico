@@ -19,7 +19,7 @@ interface Draft {
   createdAt: string;
 }
 
-function DraftCard({ d, onChange }: { d: Draft; onChange: (d: Draft) => void }) {
+function DraftCard({ d, onChange, sends }: { d: Draft; onChange: (d: Draft) => void; sends: boolean }) {
   const [recipient, setRecipient] = useState(d.intendedRecipient);
   const [subject, setSubject] = useState(d.subject);
   const [body, setBody] = useState(d.body);
@@ -68,7 +68,7 @@ function DraftCard({ d, onChange }: { d: Draft; onChange: (d: Draft) => void }) 
           {error && <p className="text-sm text-critical">{error}</p>}
           <div className="flex flex-wrap gap-2">
             <button className="btn" disabled={busy} onClick={() => act('approve')}>
-              {busy ? 'Working...' : 'Approve and send'}
+              {busy ? 'Working...' : sends ? 'Approve and send' : 'Approve (recorded, not sent)'}
             </button>
             <button className="btn btn-ghost" disabled={busy} onClick={() => act('reject')}>
               Reject
@@ -104,7 +104,7 @@ function DraftCard({ d, onChange }: { d: Draft; onChange: (d: Draft) => void }) 
   );
 }
 
-export function Inbox({ initial }: { initial: Draft[] }) {
+export function Inbox({ initial, sends }: { initial: Draft[]; sends: boolean }) {
   const [drafts, setDrafts] = useState(initial);
   const update = (d: Draft) => setDrafts(drafts.map((x) => (x.id === d.id ? d : x)));
   const pending = drafts.filter((d) => d.status === 'pending');
@@ -113,13 +113,13 @@ export function Inbox({ initial }: { initial: Draft[] }) {
     <div className="space-y-6">
       <section className="space-y-3">
         <h2 className="text-lg font-bold">Waiting for approval ({pending.length})</h2>
-        {pending.length === 0 ? <p className="text-sm text-muted">Nothing waiting. ADVANCE verdicts create drafts here.</p> : pending.map((d) => <DraftCard key={d.id} d={d} onChange={update} />)}
+        {pending.length === 0 ? <p className="text-sm text-muted">Nothing waiting. ADVANCE verdicts create drafts here.</p> : pending.map((d) => <DraftCard key={d.id} d={d} onChange={update} sends={sends} />)}
       </section>
       {done.length > 0 && (
         <section className="space-y-3">
           <h2 className="text-lg font-bold">Handled</h2>
           {done.map((d) => (
-            <DraftCard key={d.id} d={d} onChange={update} />
+            <DraftCard key={d.id} d={d} onChange={update} sends={sends} />
           ))}
         </section>
       )}
