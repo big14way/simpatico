@@ -131,7 +131,7 @@ git clone https://github.com/big14way/simpatico && cd simpatico
 pnpm install
 cp .env.example .env          # add QLOO_API_KEY (and optionally ANTHROPIC_API_KEY, DATABASE_URL)
 ln -s ../../.env apps/web/.env
-pnpm test                     # 123 unit and integration tests, no network needed
+pnpm test                     # 124 unit and integration tests, no network needed
 pnpm dev                      # http://localhost:3000
 ```
 

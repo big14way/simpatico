@@ -35,10 +35,16 @@ export interface MemoChecks {
   cached?: boolean;
 }
 
-/** Numbers a memo may use: everything in the target's evidence, plus the rules it is judged by. */
+/**
+ * Numbers a memo may use: everything in the target's evidence, the shortlist averages the
+ * writer is shown beside it, and the rules it is judged by.
+ */
 export function allowedNumbers(pack: EvidenceRow[], extra: number[]): number[] {
   const out = new Set<number>(extra);
-  for (const r of pack) for (const [, v] of numericLeaves(r.data)) out.add(v);
+  for (const r of pack) {
+    for (const [, v] of numericLeaves(r.data)) out.add(v);
+    for (const v of Object.values(r.ref)) out.add(v);
+  }
   return [...out];
 }
 
