@@ -430,21 +430,21 @@ export class ClaimsRepo {
     await this.db.query('DELETE FROM claims WHERE run_id = $1 AND target_id = $2', [runId, targetId]);
     if (claims.length === 0) return;
     const params: unknown[] = [];
-    const values = claims.map((c) => {
+    const values = claims.map((c, i) => {
       const b = params.length;
-      params.push(c.id, c.runId, c.targetId, c.side, c.text, c.direction, c.flag, j(c.cites), c.accepted, c.reason, c.model);
-      return `($${b + 1},$${b + 2},$${b + 3},$${b + 4},$${b + 5},$${b + 6},$${b + 7},$${b + 8}::jsonb,$${b + 9},$${b + 10},$${b + 11})`;
+      params.push(c.id, c.runId, c.targetId, c.side, c.text, c.direction, c.flag, j(c.cites), c.accepted, c.reason, c.model, i);
+      return `($${b + 1},$${b + 2},$${b + 3},$${b + 4},$${b + 5},$${b + 6},$${b + 7},$${b + 8}::jsonb,$${b + 9},$${b + 10},$${b + 11},$${b + 12})`;
     });
     await this.db.query(
-      `INSERT INTO claims (id, run_id, target_id, side, text, direction, flag, cites, accepted, reason, model) VALUES ${values.join(',')}`,
+      `INSERT INTO claims (id, run_id, target_id, side, text, direction, flag, cites, accepted, reason, model, seq) VALUES ${values.join(',')}`,
       params,
     );
   }
 
   async list(runId: string, targetId?: string): Promise<ClaimRecord[]> {
     const rows = targetId
-      ? await this.db.query<Row>('SELECT * FROM claims WHERE run_id = $1 AND target_id = $2 ORDER BY created_at, id', [runId, targetId])
-      : await this.db.query<Row>('SELECT * FROM claims WHERE run_id = $1 ORDER BY target_id, created_at, id', [runId]);
+      ? await this.db.query<Row>('SELECT * FROM claims WHERE run_id = $1 AND target_id = $2 ORDER BY created_at, seq, id', [runId, targetId])
+      : await this.db.query<Row>('SELECT * FROM claims WHERE run_id = $1 ORDER BY target_id, created_at, seq, id', [runId]);
     return rows.map((r) => ({
       id: String(r.id),
       runId: String(r.run_id),

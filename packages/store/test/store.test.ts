@@ -126,6 +126,12 @@ describe('targets, evidence rows, claims, memos', () => {
     const cs = await store.claims.list('run_b', 'T1');
     expect(cs.map((c) => [c.id, c.accepted, c.flag])).toEqual([['c1', true, null], ['c2', false, 'FADING']]);
 
+    // one insert shares one created_at: the debate's own order must survive random ids
+    const claim = (id: string, text: string) => ({ id, runId: 'run_b', targetId: 'T2', side: 'bull' as const, text, direction: '+' as const, flag: null, cites: [], accepted: true, reason: null, model: 'm' });
+    await store.claims.replaceForTarget('run_b', 'T2', [claim('cl_z', 'first'), claim('cl_m', 'second'), claim('cl_a', 'third')]);
+    expect((await store.claims.list('run_b', 'T2')).map((c) => c.text)).toEqual(['first', 'second', 'third']);
+    expect((await store.claims.list('run_b')).filter((c) => c.targetId === 'T2').map((c) => c.text)).toEqual(['first', 'second', 'third']);
+
     await store.memos.upsert({ id: 'memo_1', runId: 'run_b', targetId: 'T1', markdown: '# Memo', checks: { ok: true }, ok: true, model: 'm' });
     await store.memos.upsert({ id: 'memo_1', runId: 'run_b', targetId: 'T1', markdown: '# Memo v2', checks: { ok: false }, ok: false, model: 'm' });
     const memo = await store.memos.get('memo_1');

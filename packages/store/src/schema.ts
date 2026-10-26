@@ -128,6 +128,8 @@ CREATE TABLE IF NOT EXISTS claims (
   created_at   timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS claims_run_idx ON claims (run_id, target_id);
+-- the order the debate produced them in (one insert shares one created_at)
+ALTER TABLE claims ADD COLUMN IF NOT EXISTS seq integer NOT NULL DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS memos (
   id           text PRIMARY KEY,
