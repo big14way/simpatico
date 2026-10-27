@@ -14,6 +14,8 @@ export default async function Desk() {
   const runs = runsRaw as Run[];
   const latest = new Map<string, Run>();
   for (const r of runs) if (r.scenario && r.status === 'done' && !latest.has(r.scenario)) latest.set(r.scenario, r);
+  // custom screens, plus only the latest finished run of each showcase (earlier ones stay reachable by link)
+  const recent = runs.filter((r) => !r.scenario || r.status !== 'done' || latest.get(r.scenario)?.id === r.id).slice(0, 12);
 
   return (
     <div className="space-y-8">
@@ -99,7 +101,7 @@ export default async function Desk() {
 
       <section>
         <h2 className="mb-3 text-lg font-bold">Recent screens</h2>
-        {runs.length === 0 ? (
+        {recent.length === 0 ? (
           <p className="text-sm text-muted">No runs yet. Start with a showcase screen or a new mandate.</p>
         ) : (
           <div className="card overflow-x-auto">
@@ -113,7 +115,7 @@ export default async function Desk() {
                 </tr>
               </thead>
               <tbody>
-                {runs.map((r) => (
+                {recent.map((r) => (
                   <tr key={r.id} className="border-b border-line last:border-0">
                     <td className="px-3 py-2">
                       <Link href={`/runs/${r.id}`}>{r.mandate.title ?? `${r.mandate.buyer.name} screen`}</Link>
