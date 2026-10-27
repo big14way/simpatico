@@ -1,0 +1,724 @@
+{
+ "base": "https://simpatico-nine.vercel.app",
+ "viewport": [
+  1440,
+  810
+ ],
+ "window": [
+  1440,
+  900
+ ],
+ "video": [
+  1920,
+  1080
+ ],
+ "out": "clips",
+ "accent": "#3987e5",
+ "scenes": [
+  {
+   "name": "desk",
+   "steps": [
+    [
+     "goto",
+     "/",
+     "h2:has-text(\"Showcase screens\")"
+    ],
+    [
+     "wait",
+     2500
+    ],
+    [
+     "moveTo",
+     "h1",
+     900,
+     -200,
+     0
+    ],
+    [
+     "wait",
+     1500
+    ],
+    [
+     "scrollTo",
+     "h2:has-text(\"Showcase screens\")",
+     120,
+     1400
+    ],
+    [
+     "wait",
+     800
+    ],
+    [
+     "moveTo",
+     "article:has-text(\"Licensing / co-brand\")",
+     800
+    ],
+    [
+     "zoom",
+     "article:has-text(\"Licensing / co-brand\")",
+     1.4,
+     900,
+     2800
+    ],
+    [
+     "unzoom",
+     700
+    ],
+    [
+     "wait",
+     500
+    ]
+   ]
+  },
+  {
+   "name": "live",
+   "steps": [
+    [
+     "goto",
+     "/mandate/new",
+     "textarea[placeholder^=\"Candidate brands\"]"
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "moveTo",
+     "label:has-text(\"Licensing\")",
+     800
+    ],
+    [
+     "click"
+    ],
+    [
+     "wait",
+     400
+    ],
+    [
+     "moveTo",
+     "input[placeholder^=\"e.g. PepsiCo\"]",
+     700
+    ],
+    [
+     "click"
+    ],
+    [
+     "type",
+     "Chicago Bulls",
+     55
+    ],
+    [
+     "wait",
+     300
+    ],
+    [
+     "moveTo",
+     "input[placeholder=\"Better-for-you bolt-on screen\"]",
+     600
+    ],
+    [
+     "click"
+    ],
+    [
+     "type",
+     "Bulls streetwear collaboration",
+     28
+    ],
+    [
+     "wait",
+     300
+    ],
+    [
+     "moveTo",
+     "textarea[placeholder^=\"Candidate brands\"]",
+     700
+    ],
+    [
+     "click"
+    ],
+    [
+     "type",
+     "Nike, Air Jordan, Adidas, Puma, Under Armour, New Era, Mitchell & Ness, 47 Brand, Champion, Converse, Vans, Kith, Stussy, Supreme, Fear of God, Off-White, A Bathing Ape, Carhartt, Aime Leon Dore",
+     9
+    ],
+    [
+     "wait",
+     900
+    ],
+    [
+     "moveTo",
+     "button:has-text(\"Screen the universe\")",
+     900
+    ],
+    [
+     "click"
+    ],
+    [
+     "waitFor",
+     "h2:has-text(\"Confirm 1 name\")",
+     90000
+    ],
+    [
+     "wait",
+     1800
+    ],
+    [
+     "saveVar",
+     "runUrl",
+     "location.pathname"
+    ],
+    [
+     "moveTo",
+     "button:has-text(\"Drop it\")",
+     900
+    ],
+    [
+     "click"
+    ],
+    [
+     "wait",
+     600
+    ],
+    [
+     "moveTo",
+     "button:has-text(\"Confirm and continue\")",
+     700
+    ],
+    [
+     "click"
+    ],
+    [
+     "waitUntil",
+     "!document.body.innerText.includes('Working...') && document.body.innerText.includes('Ranked shortlist')",
+     300000
+    ],
+    [
+     "wait",
+     2500
+    ],
+    [
+     "saveVar",
+     "targetUrl",
+     "document.querySelector('a[href*=\"/targets/\"]').getAttribute('href')"
+    ],
+    [
+     "scrollTo",
+     "h2:has-text(\"Ranked shortlist\")",
+     100,
+     1600
+    ],
+    [
+     "wait",
+     1200
+    ],
+    [
+     "zoom",
+     "h2:has-text(\"Ranked shortlist\")",
+     1.25,
+     900,
+     3500,
+     300,
+     200
+    ],
+    [
+     "unzoom",
+     700
+    ],
+    [
+     "wait",
+     800
+    ]
+   ]
+  },
+  {
+   "name": "dealroom",
+   "steps": [
+    [
+     "goto",
+     "{{targetUrl}}",
+     "h2:has-text(\"Six audience metrics\")"
+    ],
+    [
+     "wait",
+     3000
+    ],
+    [
+     "moveTo",
+     "h1",
+     800
+    ],
+    [
+     "zoom",
+     "h2:has-text(\"Why this verdict\")",
+     1.35,
+     900,
+     2600,
+     250,
+     40
+    ],
+    [
+     "unzoom",
+     700
+    ],
+    [
+     "scrollTo",
+     "h2:has-text(\"Six audience metrics\")",
+     90,
+     1400
+    ],
+    [
+     "wait",
+     900
+    ],
+    [
+     "zoom",
+     "h2:has-text(\"Six audience metrics\")",
+     1.3,
+     900,
+     3200,
+     200,
+     160
+    ],
+    [
+     "unzoom",
+     700
+    ],
+    [
+     "moveTo",
+     "h2:has-text(\"How F is built\")",
+     700
+    ],
+    [
+     "zoom",
+     "h2:has-text(\"How F is built\")",
+     1.35,
+     900,
+     3000,
+     150,
+     140
+    ],
+    [
+     "unzoom",
+     700
+    ],
+    [
+     "scrollTo",
+     "h2:has-text(\"Where the audiences meet\")",
+     90,
+     1400
+    ],
+    [
+     "wait",
+     1200
+    ],
+    [
+     "zoom",
+     "h2:has-text(\"Where the audiences meet\")",
+     1.3,
+     900,
+     3000,
+     250,
+     150
+    ],
+    [
+     "unzoom",
+     700
+    ],
+    [
+     "wait",
+     500
+    ]
+   ]
+  },
+  {
+   "name": "map",
+   "steps": [
+    [
+     "goto",
+     "{{targetUrl}}",
+     "h2:has-text(\"Footprint overlap for distribution\")"
+    ],
+    [
+     "wait",
+     1500
+    ],
+    [
+     "scrollTo",
+     "h2:has-text(\"Footprint overlap for distribution\")",
+     90,
+     1200
+    ],
+    [
+     "wait",
+     6000
+    ],
+    [
+     "moveTo",
+     "h2:has-text(\"Footprint overlap for distribution\")",
+     700,
+     0,
+     260
+    ],
+    [
+     "zoom",
+     "h2:has-text(\"Footprint overlap for distribution\")",
+     1.25,
+     900,
+     3500,
+     300,
+     250
+    ],
+    [
+     "unzoom",
+     700
+    ],
+    [
+     "wait",
+     500
+    ]
+   ]
+  },
+  {
+   "name": "debate",
+   "steps": [
+    [
+     "goto",
+     "{{targetUrl}}",
+     "h2:has-text(\"Bull vs bear\")"
+    ],
+    [
+     "wait",
+     1500
+    ],
+    [
+     "scrollTo",
+     "h2:has-text(\"Bull vs bear\")",
+     90,
+     1400
+    ],
+    [
+     "wait",
+     1500
+    ],
+    [
+     "moveTo",
+     ":text(\"Rejected by the judge\")",
+     900
+    ],
+    [
+     "zoom",
+     ":text(\"Rejected by the judge\")",
+     1.6,
+     900,
+     4000,
+     0,
+     -40
+    ],
+    [
+     "unzoom",
+     700
+    ],
+    [
+     "wait",
+     600
+    ]
+   ]
+  },
+  {
+   "name": "memo",
+   "steps": [
+    [
+     "goto",
+     "{{targetUrl}}",
+     "h2:has-text(\"IC memo\")"
+    ],
+    [
+     "wait",
+     1500
+    ],
+    [
+     "scrollTo",
+     "h2:has-text(\"IC memo\")",
+     90,
+     1400
+    ],
+    [
+     "wait",
+     1200
+    ],
+    [
+     "zoom",
+     "h2:has-text(\"IC memo\")",
+     1.3,
+     900,
+     3500,
+     280,
+     170
+    ],
+    [
+     "unzoom",
+     700
+    ],
+    [
+     "moveTo",
+     "summary:has-text(\"Provenance\")",
+     800
+    ],
+    [
+     "click"
+    ],
+    [
+     "wait",
+     1200
+    ],
+    [
+     "scrollTo",
+     "summary:has-text(\"Provenance\")",
+     120,
+     1200
+    ],
+    [
+     "wait",
+     600
+    ],
+    [
+     "moveTo",
+     "td button >> nth=0",
+     700
+    ],
+    [
+     "click"
+    ],
+    [
+     "wait",
+     1500
+    ],
+    [
+     "zoom",
+     "summary:has-text(\"Provenance\")",
+     1.3,
+     900,
+     3500,
+     300,
+     180
+    ],
+    [
+     "unzoom",
+     700
+    ],
+    [
+     "wait",
+     500
+    ]
+   ]
+  },
+  {
+   "name": "pipeline",
+   "steps": [
+    [
+     "goto",
+     "/pipeline",
+     "h1"
+    ],
+    [
+     "wait",
+     3000
+    ],
+    [
+     "moveTo",
+     "h1",
+     700
+    ],
+    [
+     "zoomPoint",
+     560,
+     420,
+     1.25,
+     900,
+     3500
+    ],
+    [
+     "unzoom",
+     700
+    ],
+    [
+     "wait",
+     500
+    ]
+   ]
+  },
+  {
+   "name": "approve",
+   "steps": [
+    [
+     "goto",
+     "/approvals",
+     "h2:has-text(\"Waiting for approval\")"
+    ],
+    [
+     "wait",
+     2500
+    ],
+    [
+     "moveTo",
+     "input[placeholder=\"partnerships@brand.com\"]",
+     800
+    ],
+    [
+     "click"
+    ],
+    [
+     "press",
+     "Meta+A"
+    ],
+    [
+     "type",
+     "partnerships@example.com",
+     30
+    ],
+    [
+     "wait",
+     500
+    ],
+    [
+     "moveTo",
+     "button:has-text(\"Approve and send\")",
+     800
+    ],
+    [
+     "zoom",
+     "button:has-text(\"Approve and send\")",
+     1.3,
+     800,
+     1200,
+     300,
+     -180
+    ],
+    [
+     "unzoom",
+     600
+    ],
+    [
+     "moveTo",
+     "button:has-text(\"Approve and send\")",
+     500
+    ],
+    [
+     "click"
+    ],
+    [
+     "waitFor",
+     "p:has-text(\"delivered to\")",
+     30000
+    ],
+    [
+     "wait",
+     1200
+    ],
+    [
+     "scrollTo",
+     "p:has-text(\"delivered to\")",
+     380,
+     1400
+    ],
+    [
+     "wait",
+     600
+    ],
+    [
+     "zoom",
+     "p:has-text(\"delivered to\")",
+     1.45,
+     900,
+     3500,
+     200,
+     -60
+    ],
+    [
+     "unzoom",
+     700
+    ],
+    [
+     "wait",
+     500
+    ]
+   ]
+  },
+  {
+   "name": "ablation",
+   "steps": [
+    [
+     "goto",
+     "/ablation?runId=run_1fbb132ae84b4b91b71f",
+     "h2:has-text(\"Shortlist rankings, four ways\")"
+    ],
+    [
+     "wait",
+     2500
+    ],
+    [
+     "scrollTo",
+     "h2:has-text(\"Whole universe\")",
+     100,
+     1400
+    ],
+    [
+     "wait",
+     1000
+    ],
+    [
+     "zoom",
+     "h2:has-text(\"Whole universe\")",
+     1.35,
+     900,
+     4000,
+     250,
+     150
+    ],
+    [
+     "unzoom",
+     700
+    ],
+    [
+     "scrollTo",
+     "h2:has-text(\"Shortlist rankings, four ways\")",
+     100,
+     1400
+    ],
+    [
+     "wait",
+     800
+    ],
+    [
+     "zoom",
+     "h2:has-text(\"Shortlist rankings, four ways\")",
+     1.3,
+     900,
+     3500,
+     250,
+     170
+    ],
+    [
+     "unzoom",
+     700
+    ],
+    [
+     "wait",
+     500
+    ]
+   ]
+  },
+  {
+   "name": "tests",
+   "viewport": [
+    1920,
+    1080
+   ],
+   "terminal": {
+    "title": "simpatico \u00b7 pnpm test",
+    "schedule": "schedules/tests.json",
+    "end": 15
+   }
+  }
+ ]
+}

@@ -1,0 +1,686 @@
+{
+ "clips_dir": "clips",
+ "work_dir": "build",
+ "output": "out/simpatico-pitch.mp4",
+ "voice": "en-US-AndrewMultilingualNeural",
+ "voice_rate": "+14%",
+ "crossfade": 0.6,
+ "sfx_gain": 0.6,
+ "brand": {
+  "name": "Simpatico",
+  "domain": "simpatico-nine.vercel.app",
+  "paper": "#0b0b0c",
+  "paper_deep": "#151516",
+  "ink": "#f0efec",
+  "ink_soft": "#c3c2b7",
+  "ink_faint": "#6f6e69",
+  "accent": "#3987e5",
+  "accent_soft": "#a9c9f2",
+  "card": "#10223d"
+ },
+ "scenes": [
+  {
+   "id": "s0",
+   "kind": "title",
+   "image": "img/bg.png",
+   "tagline": "Do the customers get along? An agentic deal desk that scores it from Qloo's taste graph and checks every claim in code.",
+   "tag": "Qloo LLM Hackathon 2026 · brand M&A, licensing, VC",
+   "vo": "This is Simpatico: an agentic deal desk that checks whether two brands' customers actually get along, before anyone signs. Built on Qloo's taste graph."
+  },
+  {
+   "id": "p1",
+   "kind": "slide",
+   "image": "img/desk.jpg",
+   "label": "The problem",
+   "head": "Every deal model has a spreadsheet for revenue. None for whether the customers get along.",
+   "bullets": [
+    {
+     "k": "The analyst",
+     "v": "Thirty candidate brands, one week, one recommendation."
+    },
+    {
+     "k": "Modelled",
+     "v": "Revenue, margins, synergies."
+    },
+    {
+     "k": "Guessed",
+     "v": "Whether the two audiences share culture, places and direction."
+    }
+   ],
+   "vo": "A corporate development analyst gets thirty candidate brands and a week. The model covers revenue and synergies. Whether the two customer bases share culture, cities and direction is left to gut feel."
+  },
+  {
+   "id": "p2",
+   "kind": "slide",
+   "image": "img/dealroom.jpg",
+   "label": "The market and the gap",
+   "head": "Big brands buy audiences. Nobody models the audience fit.",
+   "bullets": [
+    {
+     "k": "Siete, $1.2 billion",
+     "v": "PepsiCo, announced Oct 2024, closed Jan 2025."
+    },
+    {
+     "k": "poppi",
+     "v": "PepsiCo again, agreed in 2025."
+    },
+    {
+     "k": "Solved",
+     "v": "Market sizing, financials, awareness surveys."
+    },
+    {
+     "k": "Not solved",
+     "v": "Audience fit per candidate, with evidence a committee can check."
+    }
+   ],
+   "columns": 2,
+   "vo": "PepsiCo paid one point two billion dollars for Siete, then agreed to buy poppi: brands bought for their audiences. Financials get modelled. Whether two customer bases fit, with evidence a committee can check, doesn't."
+  },
+  {
+   "id": "p3",
+   "kind": "slide",
+   "label": "What changes",
+   "head": "Qloo measures. Code decides. Agents argue. A judge checks.",
+   "diagram": {
+    "boxes": [
+     {
+      "id": "m",
+      "box": [
+       36,
+       30,
+       674,
+       110
+      ],
+      "title": "Mandate",
+      "sub": "a buyer, a deal type, 20 to 60 candidate brands"
+     },
+     {
+      "id": "q",
+      "box": [
+       36,
+       170,
+       674,
+       260
+      ],
+      "title": "Qloo taste graph",
+      "sub": "affinity across brands, music, TV, film, podcasts, places",
+      "accent": true
+     },
+     {
+      "id": "c",
+      "box": [
+       36,
+       330,
+       330,
+       440
+      ],
+      "title": "Code",
+      "sub": "six metrics, score F, verdict"
+     },
+     {
+      "id": "a",
+      "box": [
+       380,
+       330,
+       674,
+       440
+      ],
+      "title": "Bull vs bear",
+      "sub": "Claude cites the ledger"
+     },
+     {
+      "id": "j",
+      "box": [
+       380,
+       490,
+       674,
+       580
+      ],
+      "title": "Code judge",
+      "sub": "drops unbacked claims",
+      "accent": true
+     },
+     {
+      "id": "o",
+      "box": [
+       36,
+       490,
+       330,
+       580
+      ],
+      "title": "Act",
+      "sub": "memo, pipeline, outreach"
+     }
+    ],
+    "arrows": [
+     {
+      "from": "m",
+      "from_side": "bottom",
+      "to": "q",
+      "to_side": "top"
+     },
+     {
+      "from": [
+       183,
+       260
+      ],
+      "to": [
+       183,
+       330
+      ]
+     },
+     {
+      "from": [
+       527,
+       260
+      ],
+      "to": [
+       527,
+       330
+      ]
+     },
+     {
+      "from": "a",
+      "from_side": "bottom",
+      "to": "j",
+      "to_side": "top"
+     },
+     {
+      "from": "c",
+      "from_side": "bottom",
+      "to": "o",
+      "to_side": "top"
+     },
+     {
+      "from": "j",
+      "from_side": "left",
+      "to": "o",
+      "to_side": "right",
+      "soft": true,
+      "label": "validated claims",
+      "label_at": [
+       355,
+       470
+      ],
+      "anchor": "mm"
+     }
+    ],
+    "note": "No model sets a score or a verdict."
+   },
+   "bullets": [
+    {
+     "k": "Measured",
+     "v": "About 120 Qloo calls per screen."
+    },
+    {
+     "k": "Checked",
+     "v": "Every number a model writes."
+    }
+   ],
+   "vo": "Simpatico turns a mandate into a verdict. Qloo scores every candidate against the buyer's audience; code computes the metrics, the score and the verdict. Claude argues bull and bear, and a code judge throws out anything the evidence doesn't back."
+  },
+  {
+   "id": "d1",
+   "kind": "laptop",
+   "layout": "wide",
+   "src": "desk.webm",
+   "cut": [
+    1.5,
+    15.8
+   ],
+   "crop": [
+    1920,
+    1080,
+    0,
+    0
+   ],
+   "max_speed": 1.6,
+   "step": "01",
+   "head": "The desk: three showcase screens",
+   "sub": "An acquisition, a licensing deal and a venture thesis, each scored from Qloo.",
+   "vo": "The desk opens on three showcase screens: an acquisition, a licensing deal and a venture thesis. But the real test is a screen nobody has run before."
+  },
+  {
+   "id": "d2",
+   "kind": "laptop",
+   "layout": "wide",
+   "src": "live.webm",
+   "cut": [
+    [
+     1.5,
+     30.8
+    ],
+    [
+     33,
+     50
+    ],
+    [
+     80,
+     102.5
+    ]
+   ],
+   "crop": [
+    1920,
+    1080,
+    0,
+    0
+   ],
+   "max_speed": 2.6,
+   "step": "02",
+   "head": "A brand-new screen, run live",
+   "sub": "Chicago Bulls against 19 streetwear labels. A real run, sped up: live Qloo calls, Claude Haiku and the judge.",
+   "vo": "So here's one, live. The Chicago Bulls want a streetwear partner, and nineteen labels go in. Qloo can't match Aime Leon Dore cleanly, so Simpatico asks instead of guessing. Then live Qloo calls score the audiences, Claude argues each target, and the red lines are claims the judge just threw out. Air Jordan comes out first, at seventy-five point eight."
+  },
+  {
+   "id": "d3",
+   "kind": "laptop",
+   "layout": "wide",
+   "src": "dealroom.webm",
+   "cut": [
+    2.5,
+    33.3
+   ],
+   "crop": [
+    1920,
+    1080,
+    0,
+    0
+   ],
+   "max_speed": 2.8,
+   "step": "03",
+   "head": "Air Jordan: every number from Qloo, every formula in code",
+   "sub": "Six metrics against the shortlist average, the weighted score F, and the rule that set ADVANCE.",
+   "vo": "Every number comes from Qloo and every formula is code: affinity both ways, taste, culture, demographics, geography and momentum, each against the shortlist, then the score and the rule that set the verdict."
+  },
+  {
+   "id": "d4",
+   "kind": "laptop",
+   "layout": "wide",
+   "src": "map.webm",
+   "cut": [
+    7.5,
+    17.6
+   ],
+   "crop": [
+    1920,
+    1080,
+    0,
+    0
+   ],
+   "max_speed": 1.6,
+   "step": "04",
+   "head": "Where the audiences live",
+   "sub": "Qloo heatmaps across 55 US metros: shared strongholds and white space.",
+   "vo": "Qloo heatmaps become a footprint map: shared strongholds, and white-space metros where the target is strong and the buyer's audience isn't."
+  },
+  {
+   "id": "d5",
+   "kind": "laptop",
+   "layout": "wide",
+   "src": "debate.webm",
+   "cut": [
+    3.0,
+    14.2
+   ],
+   "crop": [
+    1920,
+    1080,
+    0,
+    0
+   ],
+   "max_speed": 1.3,
+   "step": "05",
+   "head": "Bull vs bear, checked by a code judge",
+   "sub": "Every claim cites ledger paths. A wrong value, a wrong direction or an invented flag is rejected, with the reason.",
+   "vo": "The bull and the bear must cite their numbers, and a code judge checks each one against the ledger. This bear point called demographic fit a weakness when it beats the shortlist average, so it's rejected, and the reason stays on screen."
+  },
+  {
+   "id": "d6",
+   "kind": "laptop",
+   "layout": "wide",
+   "src": "memo.webm",
+   "cut": [
+    3.0,
+    27.8
+   ],
+   "crop": [
+    1920,
+    1080,
+    0,
+    0
+   ],
+   "max_speed": 2.6,
+   "step": "06",
+   "head": "A memo that can't invent a number",
+   "sub": "Export stays blocked until every number is in the ledger. Provenance shows the Qloo call behind each metric.",
+   "vo": "Claude writes the memo, but it can't be exported until every number in it is found in the ledger: nineteen, all checked. Provenance shows the exact Qloo call behind each metric."
+  },
+  {
+   "id": "d7",
+   "kind": "laptop",
+   "layout": "wide",
+   "src": "pipeline.webm",
+   "cut": [
+    2.5,
+    11.0
+   ],
+   "crop": [
+    1920,
+    1080,
+    0,
+    0
+   ],
+   "max_speed": 1.5,
+   "step": "07",
+   "head": "Every target on a pipeline board",
+   "sub": "Verdict, score and next step for each deal; a signed weekly job re-scores the ones being watched.",
+   "vo": "Every screened target lands on a pipeline board with its next step, and a signed weekly job re-scores the deals it's watching."
+  },
+  {
+   "id": "d8",
+   "kind": "laptop",
+   "layout": "wide",
+   "src": "approve.webm",
+   "cut": [
+    2.5,
+    21.9
+   ],
+   "crop": [
+    1920,
+    1080,
+    0,
+    0
+   ],
+   "max_speed": 1.8,
+   "step": "08",
+   "head": "Outreach waits for a human",
+   "sub": "The approval is bound to a SHA-256 of the text. Sandbox mode: the builder's inbox, never the brand.",
+   "vo": "ADVANCE verdicts draft outreach that waits for a human. The approval is bound to a hash of the exact text, and in sandbox mode the email goes to the builder's inbox, never the brand."
+  },
+  {
+   "id": "d8b",
+   "kind": "slide",
+   "image": "img/email.jpg",
+   "label": "Delivered",
+   "head": "Seconds later, on a phone.",
+   "bullets": [
+    {
+     "k": "Sandbox",
+     "v": "Sent to the builder's own inbox (address blurred here)."
+    },
+    {
+     "k": "Named, not contacted",
+     "v": "The intended recipient is stated in the first line."
+    },
+    {
+     "k": "Drafted by Claude",
+     "v": "From validated claims; sent only after a human approved it."
+    }
+   ],
+   "vo": "Seconds later it lands on a phone: tagged sandbox, naming the intended recipient it never contacted."
+  },
+  {
+   "id": "d9",
+   "kind": "laptop",
+   "layout": "wide",
+   "src": "ablation.webm",
+   "cut": [
+    2.5,
+    22.7
+   ],
+   "crop": [
+    1920,
+    1080,
+    0,
+    0
+   ],
+   "max_speed": 1.6,
+   "step": "09",
+   "head": "Is Qloo doing the work? The ablation",
+   "sub": "Claude Opus ranks the same 29 brands from general knowledge: Kendall tau 0.04 against Qloo, 0 of the top 5 shared.",
+   "vo": "Is Qloo doing the work? The ablation asks Claude Opus to rank the same brands from general knowledge alone. On the PepsiCo screen its ranking is unrelated to Qloo's audience data: Kendall tau of zero point zero four, and none of the top five match."
+  },
+  {
+   "id": "d10",
+   "kind": "laptop",
+   "layout": "wide",
+   "src": "tests.webm",
+   "cut": [
+    0.2,
+    14.8
+   ],
+   "crop": [
+    1760,
+    960,
+    80,
+    60
+   ],
+   "max_speed": 1.8,
+   "step": "10",
+   "head": "134 tests in CI",
+   "sub": "The judge, the memo checker, the sandbox and the refusal to score without Qloo. Real output.",
+   "vo": "A hundred and thirty-four tests cover the judge, the memo checker, the sandbox and the refusal to score without Qloo."
+  },
+  {
+   "id": "p4",
+   "kind": "slide",
+   "image": "img/ablation.jpg",
+   "label": "Why Qloo",
+   "head": "General knowledge knows who is famous. Qloo knows whose fans overlap.",
+   "bullets": [
+    {
+     "k": "Unfamous fit",
+     "v": "PepsiCo screen: LLM-only vs Qloo, tau 0.04; top five, 0 shared."
+    },
+    {
+     "k": "Famous fit",
+     "v": "Dodgers licensing: tau 0.46, 4 of 5. Close only here."
+    },
+    {
+     "k": "Cross-domain",
+     "v": "Remove it: 6 Dodgers verdicts change, incl. the only ADVANCE."
+    },
+    {
+     "k": "No Qloo, no score",
+     "v": "Every scoring path stops. It doesn't guess."
+    }
+   ],
+   "columns": 2,
+   "vo": "Where the fit is famous, like baseball licensing, general knowledge gets close. Where it isn't, it's unrelated. Remove cross-domain agreement and six Dodgers verdicts change. And without Qloo, Simpatico refuses to score."
+  },
+  {
+   "id": "p5",
+   "kind": "slide",
+   "image": "img/debate.jpg",
+   "label": "Built on",
+   "head": "Qloo measures. Claude argues. Code has the last word.",
+   "bullets": [
+    {
+     "k": "Qloo",
+     "v": "search, tags, insights, trending, compare"
+    },
+    {
+     "k": "Claude Haiku",
+     "v": "bull, bear, memos, outreach: 2 cents a screen"
+    },
+    {
+     "k": "Claude Opus",
+     "v": "the no-Qloo baseline"
+    },
+    {
+     "k": "Code",
+     "v": "metrics, verdicts, judge, memo checker"
+    },
+    {
+     "k": "Next.js + Neon",
+     "v": "on Vercel, runs in leased slices"
+    },
+    {
+     "k": "Resend",
+     "v": "sandboxed email after approval"
+    }
+   ],
+   "columns": 2,
+   "vo": "Qloo does the measuring. Claude Haiku argues and writes for about two cents a screen, Claude Opus is the no-Qloo baseline, and code has the last word."
+  },
+  {
+   "id": "p6",
+   "kind": "slide",
+   "image": "img/pipeline.jpg",
+   "label": "Who pays, and where it stands",
+   "head": "A due-diligence input for teams that buy, license and back brands.",
+   "bullets": [
+    {
+     "k": "Who pays",
+     "v": "Corporate development, licensing agencies, consumer VC funds."
+    },
+    {
+     "k": "Per",
+     "v": "Seat or screen: about 120 Qloo calls and 2 cents of Claude."
+    },
+    {
+     "k": "Today",
+     "v": "Built in this hackathon. Live demo, MIT code, 134 tests."
+    },
+    {
+     "k": "Next",
+     "v": "More buyers on the weekly monitor; discovery from Qloo tags."
+    }
+   ],
+   "columns": 2,
+   "vo": "Who pays: corporate development teams, licensing agencies and consumer venture funds, per seat or per screen. Today it's a hackathon build: the demo is live, the code is public, and anyone can run a screen."
+  },
+  {
+   "id": "p7",
+   "kind": "slide",
+   "label": "For Qloo",
+   "head": "The taste graph, where money is decided.",
+   "diagram": {
+    "boxes": [
+     {
+      "id": "q",
+      "box": [
+       160,
+       40,
+       550,
+       130
+      ],
+      "title": "Qloo taste graph",
+      "sub": "audiences across culture and brands",
+      "accent": true
+     },
+     {
+      "id": "s",
+      "box": [
+       160,
+       250,
+       550,
+       350
+      ],
+      "title": "Simpatico",
+      "sub": "metrics, judge, memo, monitor"
+     },
+     {
+      "id": "o1",
+      "box": [
+       36,
+       500,
+       236,
+       610
+      ],
+      "title": "Acquisitions",
+      "sub": "bolt-on fit"
+     },
+     {
+      "id": "o2",
+      "box": [
+       256,
+       500,
+       456,
+       610
+      ],
+      "title": "Licensing",
+      "sub": "co-brand partners"
+     },
+     {
+      "id": "o3",
+      "box": [
+       476,
+       500,
+       674,
+       610
+      ],
+      "title": "Venture",
+      "sub": "thesis screens"
+     }
+    ],
+    "arrows": [
+     {
+      "from": "q",
+      "from_side": "bottom",
+      "to": "s",
+      "to_side": "top",
+      "label": "evidence ledger",
+      "label_at": [
+       372,
+       190
+      ],
+      "anchor": "lm"
+     },
+     {
+      "from": "s",
+      "from_side": "bottom",
+      "to": "o1",
+      "to_side": "top"
+     },
+     {
+      "from": "s",
+      "from_side": "bottom",
+      "to": "o2",
+      "to_side": "top"
+     },
+     {
+      "from": "s",
+      "from_side": "bottom",
+      "to": "o3",
+      "to_side": "top"
+     }
+    ],
+    "note": "Every verdict traces back to the Qloo calls behind it."
+   },
+   "bullets": [
+    {
+     "k": "A new buyer",
+     "v": "Deal teams, using the taste graph as due-diligence evidence."
+    }
+   ],
+   "vo": "For Qloo, this puts the taste graph into due diligence: acquisitions, licensing and venture, where money is decided. Every verdict traces back to the Qloo calls behind it, and no model can change a number."
+  },
+  {
+   "id": "s99",
+   "kind": "end",
+   "image": "img/bg.png",
+   "lines": [
+    "Taste data in.",
+    "Verdicts out.",
+    "Nothing invented."
+   ],
+   "links": [
+    [
+     "Live demo",
+     "simpatico-nine.vercel.app"
+    ],
+    [
+     "Code",
+     "github.com/big14way/simpatico"
+    ],
+    [
+     "Method",
+     "simpatico-nine.vercel.app/method"
+    ]
+   ],
+   "footer": "Qloo taste graph · Claude Haiku + Opus · code judge · Next.js · Neon · Vercel",
+   "vo": "Simpatico. Taste data in, verdicts out, nothing invented. Run your own screen at simpatico-nine dot vercel dot app."
+  }
+ ]
+}
