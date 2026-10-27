@@ -7,6 +7,7 @@
 - **Live demo:** https://simpatico-nine.vercel.app
 - **Showcase screens:** [M&A bolt-on](https://simpatico-nine.vercel.app/scenarios/bfy-bolt-on) · [Licensing / co-brand](https://simpatico-nine.vercel.app/scenarios/dodgers-collab) · [VC thesis](https://simpatico-nine.vercel.app/scenarios/run-club-thesis)
 - **How it scores:** https://simpatico-nine.vercel.app/method
+- **Video (3:55):** https://youtu.be/TZl7X1GDIbA
 - **Try it in a minute:** [New mandate](https://simpatico-nine.vercel.app/mandate/new): name a buyer brand and 10 to 20 candidates, or switch on Qloo discovery and pick a category tag. A screen takes about a minute; ambiguous names come back as questions. Approving a draft on [Approvals](https://simpatico-nine.vercel.app/approvals) emails the builder's sandbox inbox, never the brand.
 - Built from scratch for the Qloo Agentic Hackathon (submission period 30 Sep to 30 Oct 2026). MIT licence.
 
