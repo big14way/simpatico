@@ -117,7 +117,7 @@ Where the fit is famous (MLB's existing licensees), general knowledge lands clos
 - Qloo's `/v2/trending` series on the hackathon dataset has not moved since mid-October 2025, and earlier history has universe-wide rank shifts. Momentum is therefore measured relative to the screened cohort, defaults to the window ending 1 Oct 2025 (a later as-of date reports it as *not measured*), and the weekly monitor's live momentum alerts can't fire until the series moves again; its historical replay uses 2024–2025 history.
 - `/v2/analysis/compare` compares catalogue tags rather than audiences, so cross-domain agreement is built from cross-rank calls.
 - Between two single brands Qloo's affinity is symmetric (the reverse call returns the forward value), so two-way affinity only differs from forward affinity when the buyer audience is several brands. That is why removing it changed nothing in the ablation above.
-- Qloo's graph is today's graph. The M&A showcase pins two brands PepsiCo has since agreed to buy (Siete, announced Oct 2024; poppi, Mar 2025) as a sanity check; that is look-ahead biased, not a prediction. The result is one hit and one miss: poppi ranks first of the 9 shortlisted (F 63.9, WATCH) and Siete last (F 47.4, PASS). By forward affinity alone they sit 10th and 20th of 29. A snack brand bought for distribution and category reasons is the kind of deal audience fit doesn't explain.
+- Qloo's graph is today's graph. The M&A showcase pins two brands PepsiCo has since agreed to buy (Siete, $1.2 billion, announced Oct 2024; poppi, Mar 2025) as a sanity check; that is look-ahead biased, not a prediction. The result is one hit and one miss: poppi ranks first of the 9 shortlisted (F 63.9, WATCH) and Siete last (F 47.4, PASS). By forward affinity alone they sit 10th and 20th of 29. A snack brand bought for distribution and category reasons is the kind of deal audience fit doesn't explain.
 - Small or new brands can have thin coverage; Simpatico reports that instead of guessing. Geographic footprint covers 55 US metros.
 
 ## Architecture
@@ -145,7 +145,7 @@ git clone https://github.com/big14way/simpatico && cd simpatico
 pnpm install
 cp .env.example .env          # add QLOO_API_KEY (and optionally ANTHROPIC_API_KEY, DATABASE_URL)
 ln -s ../../.env apps/web/.env
-pnpm test                     # 131 unit and integration tests, no network needed
+pnpm test                     # 134 unit and integration tests, no network needed
 pnpm dev                      # http://localhost:3000
 ```
 
