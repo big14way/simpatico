@@ -2,7 +2,7 @@
 // Row ids are short and stable within a run ("t3-m1") so models can cite them reliably.
 
 import { numericLeaves } from './paths';
-import { wildcardPath } from './judge';
+import { standing, wildcardPath } from './judge';
 import type { Composite } from './score';
 import type { EvidenceRow, FlagHit, MetricKey, MetricResult } from './types';
 import { METRIC_KEYS, METRIC_LABELS } from './types';
@@ -139,9 +139,29 @@ export function buildEvidenceRows(targets: readonly TargetEvidenceInput[]): Map<
   return out;
 }
 
-/** The view of a row the models get: same id/data, minus bulky arrays. */
-export function modelView(row: EvidenceRow): { id: string; label: string; data: Record<string, unknown>; shortlistAverages?: Record<string, number> } {
+export type Reading = 'strength' | 'weakness' | 'average';
+
+/**
+ * The view of a row the models get: same id/data, minus bulky arrays, plus the code's reading
+ * of each compared path (the same comparison the judge makes), so no model has to do it.
+ */
+export function modelView(row: EvidenceRow): {
+  id: string;
+  label: string;
+  data: Record<string, unknown>;
+  shortlistAverages?: Record<string, number>;
+  reading?: Record<string, Reading>;
+} {
   const hidden = row.metric ? HIDDEN_FROM_MODELS[row.metric] ?? [] : [];
   const data = Object.fromEntries(Object.entries(row.data).filter(([k]) => !hidden.includes(k)));
-  return Object.keys(row.ref).length > 0 ? { id: row.id, label: row.label, data, shortlistAverages: row.ref } : { id: row.id, label: row.label, data };
+  if (Object.keys(row.ref).length === 0) return { id: row.id, label: row.label, data };
+  const reading: Record<string, Reading> = {};
+  for (const path of Object.keys(row.ref)) {
+    if (hidden.includes(path.split(/[.[]/)[0]!)) continue;
+    const s = standing(row, path);
+    if (s !== null) reading[path] = s === 1 ? 'strength' : s === -1 ? 'weakness' : 'average';
+  }
+  return Object.keys(reading).length > 0
+    ? { id: row.id, label: row.label, data, shortlistAverages: row.ref, reading }
+    : { id: row.id, label: row.label, data, shortlistAverages: row.ref };
 }

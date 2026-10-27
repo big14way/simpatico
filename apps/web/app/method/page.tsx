@@ -152,7 +152,9 @@ export default async function MethodPage() {
           Bull and bear get the same evidence pack (metric rows with ids such as <code>t3-m1</code>, the composite, the code&rsquo;s flags and Qloo&rsquo;s entity profile) and nothing else:
           no web search. Each writes up to five claims, and each claim cites numbers as <code>evidenceId.path = value</code>. The judge rejects a claim when the evidence id is not in
           this target&rsquo;s ledger, the path does not resolve to a number, the value differs by more than 0.01, a strength is cited below the shortlist average (or a weakness
-          above it), or a flag is invented. Rejected claims stay visible with the reason. Validated bear claims become diligence questions.
+          above it), or a flag is invented. A shortlist average may be cited too, checked the same way, but only next to one of the target&rsquo;s own values. Each side is
+          given the code&rsquo;s reading of every compared value (strength, weakness or average) and only the flags the code raised, so it doesn&rsquo;t have to guess.
+          Rejected claims stay visible with the reason. Validated bear claims become diligence questions.
         </p>
       </section>
 

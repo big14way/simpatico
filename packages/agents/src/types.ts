@@ -7,6 +7,8 @@ export interface EvidenceView {
   data: Record<string, unknown>;
   /** shortlist mean per polarised path: bull cites at/above it, bear at/below */
   shortlistAverages?: Record<string, number>;
+  /** the code's reading of each compared path for this target */
+  reading?: Record<string, 'strength' | 'weakness' | 'average'>;
 }
 
 export interface DebateInput {

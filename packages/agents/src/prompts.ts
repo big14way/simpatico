@@ -7,6 +7,8 @@ const CITATION_RULES = `Every claim must cite at least one number from the evide
 - evidenceId: the row id exactly as given (for example "t3-m1").
 - path: where the number sits inside that row's "data", using dots and [index] (for example "value", "b", "domains[1].score", "domains[0].shared[0].affinity").
 - value: the number at that path, copied exactly as it appears. Do not round, convert to percent, or compute anything new.
+Cite at most 4 numbers per claim. A shortlist average may be cited as path "shortlistAverages.<path>" next to the target's own value, never on its own; "reading" is not citable.
+Each row's "reading" is the code's comparison of a path with the shortlist average for this target: "strength", "weakness" or "average" (lower-is-better paths already accounted for). Paths without a reading can be cited by either side.
 A code judge checks every citation against the ledger and rejects claims whose numbers don't match, whose path doesn't resolve, or whose direction contradicts the data.`;
 
 function dealSentence(i: { dealType: DebateInput['dealType']; buyerName: string; targetName: string }) {
@@ -19,7 +21,7 @@ export function bullSystem(i: DebateInput): string {
 Use only the evidence pack in the user message: audience metrics computed in code from Qloo's taste graph, the composite score, the code's red flags and Qloo's entity profile. No outside knowledge.
 
 ${CITATION_RULES}
-A bull claim must cite strengths: values at or above the shortlist average shown in "shortlistAverages" for that row (lower-is-better paths are the exception, e.g. buyerTop20MissingShare).
+A bull claim must not cite a path whose reading is "weakness" (all listed in "mayNotCite"); the judge rejects it.
 
 Write at most 5 claims, most important first. Set flag to NONE, except: if the code raised ${MITIGABLE_FLAGS.join(' or ')}, you may write one claim that addresses it, with flag set to that flag name, citing evidence that offsets it. No other flag can be mitigated.
 
@@ -32,7 +34,7 @@ export function bearSystem(i: DebateInput): string {
 Use only the evidence pack in the user message: audience metrics computed in code from Qloo's taste graph, the composite score, the code's red flags and Qloo's entity profile. No outside knowledge.
 
 ${CITATION_RULES}
-A bear claim must cite weaknesses: values at or below the shortlist average shown in "shortlistAverages" for that row (lower-is-better paths are the exception, e.g. buyerTop20MissingShare).
+A bear claim must not cite a path whose reading is "strength" (all listed in "mayNotCite"); the judge rejects it.
 
 Write at most 5 claims, most important first. If the code raised red flags, surface each one in a claim with flag set to its name and explain what it means for this deal. You cannot raise a flag the code did not raise; otherwise set flag to NONE.
 
@@ -40,11 +42,14 @@ ${SAFE_USE}`;
 }
 
 export function debateUser(i: DebateInput): string {
+  const against = i.side === 'bull' ? 'weakness' : 'strength';
+  const mayNotCite = i.evidence.flatMap((r) => Object.entries(r.reading ?? {}).flatMap(([path, v]) => (v === against ? [`${r.id} ${path}`] : [])));
   return JSON.stringify(
     {
       deal: dealSentence(i),
       composite: i.score,
       redFlagsRaisedByCode: i.flags,
+      mayNotCite,
       evidence: i.evidence,
     },
     null,

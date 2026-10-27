@@ -57,6 +57,21 @@ describe('ClaudeAgents', () => {
     expect(String(p.system)).toContain('AGAINST');
   });
 
+  it('offers only the flags this side may use, and drops a spelled-out "data." path prefix', async () => {
+    const { client, calls } = fakeClient(() => ({
+      stop_reason: 'end_turn',
+      parsed_output: { claims: [{ text: 'Thin.', flag: 'NONE', cites: [{ evidenceId: 't1-m1', path: 'data.value', value: 0.6 }] }] },
+    }));
+    const agents = new ClaudeAgents({ client });
+    const flags: DebateInput['flags'] = [{ flag: 'FADING', rule: 'z < -1.5' }, { flag: 'TASTE_CLASH', rule: 'clash' }];
+    const [bear] = await agents.argue({ ...debate, flags });
+    await agents.argue({ ...debate, flags, side: 'bull' });
+    await agents.argue({ ...debate, flags: [], side: 'bull' });
+    expect(bear!.cites[0]!.path).toBe('value');
+    const offered = calls.map((c) => JSON.stringify((c.params.output_config as { format: unknown }).format).match(/one of: ([A-Z_, ]+)\./)?.[1]);
+    expect(offered).toEqual(['NONE, FADING, TASTE_CLASH', 'NONE, FADING', 'NONE']);
+  });
+
   it('turns refusals and missing output into errors instead of empty claims', async () => {
     const refusing = new ClaudeAgents({ client: fakeClient(() => ({ stop_reason: 'refusal', stop_details: { category: 'cyber' } })).client });
     await expect(refusing.argue(debate)).rejects.toThrow(/declined \(cyber\)/);

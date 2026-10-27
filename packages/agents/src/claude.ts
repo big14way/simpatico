@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import Anthropic from '@anthropic-ai/sdk';
 import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod';
 import { z } from 'zod';
-import { RED_FLAGS, type Claim } from '@simpatico/core';
+import { MITIGABLE_FLAGS, type Claim, type RedFlag } from '@simpatico/core';
 import { bearSystem, bullSystem, debateUser, memoSystem, memoUser, noQlooSystem, noQlooUser, outreachSystem, outreachUser } from './prompts';
 import type { AblationRankInput, AgentSuite, CallMeta, DebateInput, LlmCache, LlmCacheEntry, MemoInput, OutreachInput } from './types';
 
@@ -20,15 +20,22 @@ const CiteSchema = z.object({
   path: z.string().describe('path into that row\'s data, e.g. "value" or "domains[0].score"'),
   value: z.number().describe('the number at that path, copied exactly'),
 });
-const ClaimsSchema = z.object({
-  claims: z.array(
-    z.object({
-      text: z.string().describe('one or two sentences'),
-      flag: z.enum([...RED_FLAGS, 'NONE']).describe('a red flag this claim surfaces (bear) or mitigates (bull); NONE otherwise'),
-      cites: z.array(CiteSchema),
-    }),
-  ),
-});
+/**
+ * Only the flags this side may use for this target are offered. A plain string, not an enum:
+ * the SDK sends enums as a description hint and then rejects the whole answer on a stray value,
+ * whereas a stray flag should cost one claim (the judge rejects it, with the reason shown).
+ */
+function claimsSchema(flags: readonly RedFlag[]) {
+  return z.object({
+    claims: z.array(
+      z.object({
+        text: z.string().describe('one or two sentences'),
+        flag: z.string().describe(`one of: ${['NONE', ...flags].join(', ')}. A red flag this claim surfaces (bear) or mitigates (bull); NONE otherwise`),
+        cites: z.array(CiteSchema),
+      }),
+    ),
+  });
+}
 const OutreachSchema = z.object({ subject: z.string(), body: z.string() });
 /** an answer that parsed but can't be used (for example a ranking that skips most candidates) */
 export class UnusableAnswerError extends Error {
@@ -187,12 +194,15 @@ export class ClaudeAgents implements AgentSuite {
 
   async argue(input: DebateInput, meta?: CallMeta): Promise<Claim[]> {
     const system = input.side === 'bull' ? bullSystem(input) : bearSystem(input);
-    const out = await this.structured(`argue:${input.side}`, ClaimsSchema, system, debateUser(input), { model: this.model, effort: this.effort }, meta);
+    const raised = input.flags.map((f) => f.flag);
+    const flags = input.side === 'bull' ? raised.filter((f) => MITIGABLE_FLAGS.includes(f)) : raised;
+    const out = await this.structured(`argue:${input.side}`, claimsSchema(flags), system, debateUser(input), { model: this.model, effort: this.effort }, meta);
     return out.claims.map((c) => ({
       text: c.text,
       direction: input.side === 'bull' ? '+' : '-',
-      flag: c.flag === 'NONE' ? null : c.flag,
-      cites: c.cites,
+      flag: !c.flag || c.flag === 'NONE' ? null : (c.flag as RedFlag),
+      // paths are relative to the row's data; models sometimes spell that prefix out
+      cites: c.cites.map((x) => ({ ...x, path: x.path.replace(/^data\./, '') })),
     }));
   }
 

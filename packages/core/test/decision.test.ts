@@ -6,6 +6,7 @@ import { decideVerdict } from '../src/verdict';
 import { judgeClaims } from '../src/judge';
 import { buildEvidenceRows, modelView } from '../src/evidence';
 import { checkNumbers, languageGuard } from '../src/numbercheck';
+import { resolvePath } from '../src/paths';
 import type { Claim, MetricKey, MetricResult } from '../src/types';
 
 function metrics(values: Partial<Record<MetricKey, number | null>>, data: Partial<Record<MetricKey, Record<string, unknown>>> = {}): Record<MetricKey, MetricResult> {
@@ -103,6 +104,35 @@ describe('evidence rows and the judge', () => {
     expect(m1.ref.value).toBeCloseTo(0.6);
     expect(m1.ref.a).toBeCloseTo(0.675);
     expect(modelView(packA[5]!).data).not.toHaveProperty('weeks');
+  });
+
+  it("gives models the judge's own reading of every compared path", () => {
+    let n = 0;
+    for (const row of [...packA, ...rows.get('B')!]) {
+      for (const [path, reading] of Object.entries(modelView(row).reading ?? {})) {
+        n++;
+        const c = [{ evidenceId: row.id, path, value: resolvePath(row.data, path) as number }];
+        const pack = [row];
+        const asBull = judgeClaims({ side: 'bull', claims: [{ text: 'x', direction: '+', cites: c, flag: null }], pack, computedFlags: [] });
+        const asBear = judgeClaims({ side: 'bear', claims: [{ text: 'x', direction: '-', cites: c, flag: null }], pack, computedFlags: [] });
+        expect(asBull.accepted.length, `${row.id} ${path} as bull`).toBe(reading === 'weakness' ? 0 : 1);
+        expect(asBear.accepted.length, `${row.id} ${path} as bear`).toBe(reading === 'strength' ? 0 : 1);
+      }
+    }
+    expect(n).toBeGreaterThan(10);
+    expect(modelView(packA[5]!).reading ?? {}).not.toHaveProperty('weeks');
+  });
+
+  it('lets a claim cite a shortlist average next to a target value, never on its own or misquoted', () => {
+    const m1 = packA[0]!;
+    const own = cite('t1-m1', 'value', resolvePath(m1.data, 'value') as number);
+    const avg = cite('t1-m1', 'shortlistAverages.value', m1.ref.value!);
+    const side = (m1.data.value as number) >= m1.ref.value! ? bull : bear;
+    const judge = (c: Claim) => judgeClaims({ side: c.direction === '+' ? 'bull' : 'bear', claims: [c], pack: packA, computedFlags: [] });
+    expect(judge(side('vs average', [own, avg])).accepted).toHaveLength(1);
+    expect(judge(side('average only', [avg])).rejected[0]!.reason).toMatch(/only shortlist averages/);
+    expect(judge(side('misquoted', [own, { ...avg, value: m1.ref.value! + 0.1 }])).rejected[0]!.reason).toMatch(/shortlist average .* ledger says/);
+    expect(judge(side('unknown', [own, cite('t1-m1', 'shortlistAverages.nope', 1)])).rejected[0]!.reason).toMatch(/not a shortlist average/);
   });
 
   const cite = (evidenceId: string, path: string, value: number) => ({ evidenceId, path, value });

@@ -9,6 +9,8 @@ export const MAX_CLAIMS_PER_SIDE = 5;
 export const MAX_CITES_PER_CLAIM = 4;
 export const VALUE_TOLERANCE = 0.01;
 export const RANK_TOLERANCE = 1;
+/** a cite into the row's shortlist means rather than its data, e.g. "shortlistAverages.F" */
+const AVERAGES_PREFIX = 'shortlistAverages.';
 
 export interface RejectedClaim {
   claim: Claim;
@@ -35,6 +37,20 @@ export interface JudgeInput {
 /** "domains[2].score" -> "domains[].score", for polarity rules that apply to every element. */
 export function wildcardPath(path: string): string {
   return path.replace(/\[\d+\]/g, '[]');
+}
+
+/**
+ * Where the value at `path` stands for this target against the shortlist average, with
+ * lower-is-better paths flipped: +1 better, -1 worse, 0 level; null when the judge has no
+ * direction rule for the path. Bull may not cite -1, bear may not cite +1.
+ */
+export function standing(row: EvidenceRow, path: string): 1 | -1 | 0 | null {
+  const polarity = row.polarity[path] ?? row.polarity[wildcardPath(path)] ?? 0;
+  const ref = row.ref[path];
+  const actual = resolvePath(row.data, path);
+  if (polarity === 0 || ref === undefined || typeof actual !== 'number' || !Number.isFinite(actual)) return null;
+  const better = polarity * (actual - ref);
+  return better > 1e-9 ? 1 : better < -1e-9 ? -1 : 0;
 }
 
 function lastSegment(path: string): string {
@@ -67,9 +83,22 @@ function checkClaim(claim: Claim, side: 'bull' | 'bear', rows: Map<string, Evide
     }
   }
 
+  if (claim.cites.every((c) => typeof c.path === 'string' && c.path.startsWith(AVERAGES_PREFIX))) {
+    return 'claim cites only shortlist averages, no value of this target';
+  }
   for (const cite of claim.cites) {
     const row = rows.get(cite.evidenceId);
     if (!row) return `cited evidence "${cite.evidenceId}" is not in this target's ledger`;
+    // a shortlist mean is a ledger value too: checked for accuracy, with no direction rule
+    const avg = typeof cite.path === 'string' && cite.path.startsWith(AVERAGES_PREFIX) ? cite.path.slice(AVERAGES_PREFIX.length) : null;
+    if (avg !== null) {
+      const ref = row.ref[avg];
+      if (ref === undefined) return `"${cite.path}" is not a shortlist average in ${cite.evidenceId}`;
+      if (typeof cite.value !== 'number' || Math.abs(cite.value - ref) > VALUE_TOLERANCE + 1e-12) {
+        return `cited ${fmt(Number(cite.value))} for the shortlist average of ${row.label} "${avg}", but the ledger says ${fmt(ref)}`;
+      }
+      continue;
+    }
     const actual = resolvePath(row.data, cite.path);
     if (typeof actual !== 'number' || !Number.isFinite(actual)) return `"${cite.path}" does not resolve to a number in ${cite.evidenceId}`;
     if (typeof cite.value !== 'number' || !Number.isFinite(cite.value)) return `cited value for "${cite.path}" is not a number`;
@@ -77,16 +106,12 @@ function checkClaim(claim: Claim, side: 'bull' | 'bear', rows: Map<string, Evide
     if (Math.abs(cite.value - actual) > tol + 1e-12) {
       return `cited ${fmt(cite.value)} for ${row.label} "${cite.path}", but the ledger says ${fmt(actual)}`;
     }
-    const polarity = row.polarity[cite.path] ?? row.polarity[wildcardPath(cite.path)] ?? 0;
-    const ref = row.ref[cite.path];
-    if (polarity !== 0 && ref !== undefined) {
-      const better = polarity * (actual - ref);
-      if (want === '+' && better < -1e-9) {
-        return `cites ${row.label} "${cite.path}" = ${fmt(actual)} as a strength, but it is below the shortlist average (${fmt(ref)})`;
-      }
-      if (want === '-' && better > 1e-9) {
-        return `cites ${row.label} "${cite.path}" = ${fmt(actual)} as a weakness, but it is above the shortlist average (${fmt(ref)})`;
-      }
+    const s = standing(row, cite.path);
+    if (want === '+' && s === -1) {
+      return `cites ${row.label} "${cite.path}" = ${fmt(actual)} as a strength, but it is below the shortlist average (${fmt(row.ref[cite.path]!)})`;
+    }
+    if (want === '-' && s === 1) {
+      return `cites ${row.label} "${cite.path}" = ${fmt(actual)} as a weakness, but it is above the shortlist average (${fmt(row.ref[cite.path]!)})`;
     }
   }
 
